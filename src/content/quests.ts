@@ -1,0 +1,209 @@
+// Órdenes de trabajo: la columna vertebral del tutorial y de la historia.
+import type { World } from '../sim/types';
+
+export interface Quest {
+  id: string;
+  title: string;
+  desc: string;
+  hint?: string;
+  ada: string; // lo que dice ADA al activarse
+  done: (w: World) => boolean;
+  reward?: { lumen?: number; frags?: number; ops?: string[]; conds?: string[] };
+  onDone?: string; // lo que dice ADA al completarse
+}
+
+const bots = (w: World) => w.layers.flatMap((l) => l.bots.filter((b) => !b.captain));
+const f = (w: World, k: string) => Number(w.flags[k] ?? 0);
+
+export const QUESTS: Quest[] = [
+  {
+    id: 'q-mover',
+    title: 'Primeros pasos',
+    desc: 'Camina por la Galería.',
+    hint: 'WASD o flechas. En el móvil, usa la cruceta.',
+    ada: 'Capataz, ¿me recibes? Soy ADA. Llevo once años sola aquí abajo, así que perdona si hablo mucho. Empieza por caminar un poco.',
+    done: (w) => f(w, 'moves') >= 4,
+  },
+  {
+    id: 'q-picar',
+    title: 'La primera veta',
+    desc: 'Camina contra una veta de cobre para picarla.',
+    hint: 'Las vetas son las rocas con cristales naranjas. Empuja hacia ellas.',
+    ada: '¿Ves esas rocas con cristales naranjas? Son vetas de cobre. Camina contra una y el pico hará el resto.',
+    done: (w) => Number(w.flags.capMined ?? 0) >= 1,
+    onDone: 'Eso es cobre de nivel 1. Aún no vale mucho, pero ya verás lo que pasa si juntas dos iguales.',
+  },
+  {
+    id: 'q-fusion',
+    title: 'La canción del Lumen',
+    desc: 'Suelta un cobre sobre otro cobre del mismo nivel.',
+    hint: 'E o Espacio suelta lo que llevas. Deja uno en el suelo, pica otro y suéltalo encima.',
+    ada: 'Deja el cobre en el suelo con E. Luego pica otro y suéltalo encima del primero.',
+    done: (w) => w.stats.merges >= 1,
+    onDone: '¿Lo oíste? Dos minerales iguales cantan la misma nota y al juntarse suenan más fuerte que por separado. Cada fusión vale más que sus dos piezas sueltas.',
+  },
+  {
+    id: 'q-vender',
+    title: 'Una ventana en Alba',
+    desc: 'Suelta un mineral sobre el montacargas.',
+    hint: 'El montacargas es la plataforma iluminada del centro de la sala.',
+    ada: 'Ahora súbelo a la superficie: suelta el mineral sobre el montacargas.',
+    done: (w) => w.stats.sold >= 1,
+    reward: { lumen: 10 },
+    onDone: 'Arriba acaba de encenderse una ventana. La primera en once años. Guárdate ese Lumen (✦): lo vas a necesitar.',
+  },
+  {
+    id: 'q-grabar',
+    title: 'Enseñar con el ejemplo',
+    desc: 'Pulsa ⏺ Grabar, trabaja un poco y detén la grabación.',
+    hint: 'R o el botón rojo. Todo lo que hagas se convertirá en bloques de código.',
+    ada: 'Te cuento un secreto de la mina: los bots no aprenden de órdenes, aprenden de ejemplos. Pulsa Grabar, pica y suelta un par de veces y detén la grabación.',
+    done: (w) => f(w, 'recorded') >= 1,
+    onDone: 'Esto que ves es tu trabajo convertido en código. Tu partida es tu programa.',
+  },
+  {
+    id: 'q-sugerencia',
+    title: 'Un consejo de ADA',
+    desc: 'Acepta una sugerencia para generalizar tu grabación.',
+    hint: 'Graba algo repetitivo (pica, suelta, pica, suelta) y te propondré un bucle.',
+    ada: 'Cuando repites algo, puedo convertirlo en un bucle. Graba un trabajo repetitivo y acepta mi sugerencia.',
+    done: (w) => f(w, 'suggested') >= 1,
+    reward: { ops: ['repetir', 'si'] },
+    onDone: 'Acabas de aprender a usar «repetir» y «si» sin abrir ningún manual. Los tienes disponibles en el editor.',
+  },
+  {
+    id: 'q-bot',
+    title: 'El Momento de Encendido',
+    desc: 'Ensambla un bot y cárgale tu rutina.',
+    hint: 'Barra inferior → 🤖 Bot, elige una casilla y luego «Cargar rutina».',
+    ada: 'Es la hora. Ensambla un bot en el suelo y cárgale lo que grabaste. Cuando se ponga a trabajar solo, entenderás por qué me quedé once años esperando.',
+    done: (w) => bots(w).some((b) => b.program.length > 0 && b.stats.mined + b.stats.merges + b.stats.sold > 0),
+    reward: { lumen: 25 },
+    onDone: '¡Mira eso! Trabaja solo. Trabajará incluso cuando cierres el juego: es el Turno de Noche.',
+  },
+  {
+    id: 'q-lumen',
+    title: 'Ahorros de capataz',
+    desc: 'Reúne 150 ✦.',
+    hint: 'Más bots, rutinas más cortas y fusiones de nivel alto antes de vender.',
+    ada: 'Un bot es un comienzo. Tres bots bien programados ya son una mina. Reúne 150 ✦.',
+    done: (w) => w.lumen >= 150,
+  },
+  {
+    id: 'q-taller',
+    title: 'El Taller de Código',
+    desc: 'Fusiona dos instrucciones en el Taller.',
+    hint: 'Barra inferior → 🛠 Taller. Mover + mover = «avanzar hasta».',
+    ada: 'En Konstrukta todo se fusiona, incluidas las instrucciones. Abre el Taller y junta dos iguales.',
+    done: (w) => w.fusedRecipes.length >= 1,
+    onDone: 'El lenguaje de tus bots crece de la misma forma que crecen los minerales. Mireya estaría orgullosa.',
+  },
+  {
+    id: 'q-cobre5',
+    title: 'Cobre nivel 5',
+    desc: 'Envía un cobre de nivel 5 por el montacargas.',
+    hint: 'Dos nv4 hacen un nv5. Deja minerales en el suelo y ve fusionándolos.',
+    ada: 'El tramo de montacargas hacia la segunda capa necesita energía. Envíame un cobre de nivel 5 y reúne 300 ✦.',
+    done: (w) => (w.delivered.cobre ?? 0) >= 5,
+  },
+  {
+    id: 'q-bajar2',
+    title: 'La Veta de Hierro',
+    desc: 'Desciende a la segunda capa.',
+    hint: 'Barra inferior → ⬇ Descender.',
+    ada: 'La segunda capa lleva once años cerrada. Baja con cuidado… y ya que estás, mira en las paredes: Mireya escondía cápsulas de datos por todas partes.',
+    done: (w) => w.layers.length >= 2,
+    reward: { lumen: 50 },
+  },
+  {
+    id: 'q-forja',
+    title: 'Hierro y carbón',
+    desc: 'Construye una forja y crea acero.',
+    hint: 'Deja hierro sobre la forja y suelta carbón encima (o al revés).',
+    ada: 'El hierro y el carbón no se funden por armonía, sino por calor. Construye una forja y crea acero.',
+    done: (w) => (w.stats.maxLevel.acero ?? 0) >= 1,
+    onDone: 'Acero. El producto hereda el nivel más bajo de los dos, así que equilibra tus cadenas.',
+  },
+  {
+    id: 'q-pala',
+    title: 'Un viejo amigo',
+    desc: 'Repara a Pala-3 (acércate y pulsa sobre él).',
+    hint: 'Está al fondo de la capa. Excava hasta él.',
+    ada: 'Detecto una señal muy débil al fondo de la capa. Es Pala-3, uno de los primeros bots de Mireya. Todavía conserva su último programa.',
+    done: (w) => w.layers.some((l) => l.broken.some((b) => b.key === 'pala3' && b.repaired)),
+    onDone: 'Lee su código. Los bots antiguos guardan notas. A veces cuentan más de lo que deberían.',
+  },
+  {
+    id: 'q-linaje',
+    title: 'Linaje',
+    desc: 'Fusiona dos bots del mismo nivel.',
+    hint: 'Selecciona un bot → «Fusionar» → elige al otro.',
+    ada: 'Dos bots del mismo nivel pueden fusionarse en uno superior: más memoria, más velocidad y un rasgo nuevo. Elige bien qué código hereda.',
+    done: (w) => bots(w).some((b) => b.gen >= 2),
+    reward: { frags: 1 },
+  },
+  {
+    id: 'q-bajar3',
+    title: 'Las Grutas de Cristal',
+    desc: 'Desciende a la tercera capa.',
+    hint: 'Necesitas acero nv4 enviado y 2.500 ✦.',
+    ada: 'Las Grutas de Cristal están a oscuras. Allí abajo los Glitchlings campan a sus anchas. Lleva lámparas.',
+    done: (w) => w.layers.length >= 3,
+  },
+  {
+    id: 'q-luz',
+    title: 'Luz en la oscuridad',
+    desc: 'Cuelga 3 lámparas en las Grutas.',
+    hint: 'Barra inferior → 💡 Lámpara, sobre una pared junto a un pasillo.',
+    ada: 'En la oscuridad, los bots no ven si una veta está lista y pican a tientas. Cuelga lámparas: iluminan y espantan a los Glitchlings.',
+    done: (w) => (w.layers[2]?.tiles.filter((t) => t.lamp).length ?? 0) >= 3,
+    reward: { frags: 1 },
+  },
+  {
+    id: 'q-glitch',
+    title: 'Estática',
+    desc: 'Atrapa un Glitchling con el Capataz.',
+    hint: 'Aparecen de noche. Camina sobre uno para atraparlo.',
+    ada: 'Esa cosa violeta es un Glitchling. Si toca a un bot, le desordena el código. Atrápalo con tus manos: se deshace en Fragmentos de Estática.',
+    done: (w) => w.stats.glitchesCaught >= 1,
+    onDone: 'Curioso. No huía de ti: te estaba imitando.',
+  },
+  {
+    id: 'q-remache',
+    title: 'La lámpara de Remache-2',
+    desc: 'Repara a Remache-2.',
+    ada: 'Otra señal. Remache-2 acompañaba a Mireya en las grutas. Su lámpara frontal todavía parpadea.',
+    done: (w) => w.layers.some((l) => l.broken.some((b) => b.key === 'remache2' && b.repaired)),
+  },
+  {
+    id: 'q-bajar4',
+    title: 'La Forja de Magma',
+    desc: 'Desciende a la cuarta capa.',
+    hint: 'Necesitas cristal nv6 enviado y 20.000 ✦.',
+    ada: 'La cuarta capa late. Literalmente: la lava se calienta y se enfría cada cuatro segundos. Cuenta, o lleva bots Refractarios.',
+    done: (w) => w.layers.length >= 4,
+  },
+  {
+    id: 'q-lumbre',
+    title: 'El que esperaba',
+    desc: 'Repara a Lumbre-9.',
+    ada: 'Lumbre-9 está junto a la vieja escalera del Vacío. Lleva once años esperando a alguien.',
+    done: (w) => w.layers.some((l) => l.broken.some((b) => b.key === 'lumbre9' && b.repaired)),
+  },
+  {
+    id: 'q-bajar5',
+    title: 'El Vacío',
+    desc: 'Desciende a la quinta capa.',
+    hint: 'Necesitas obsidoro nv5 enviado y 150.000 ✦.',
+    ada: 'Capataz… ahí abajo la gravedad gira un cuarto de vuelta. Tu «norte» será su «este». Y hay algo más. Algo que escucha.',
+    done: (w) => w.layers.length >= 5,
+  },
+  {
+    id: 'q-nucleo',
+    title: 'Enséñale',
+    desc: 'Lleva una nucleita de nivel 6 al corazón del Núcleo.',
+    hint: 'Suéltala sobre el Núcleo, en el centro del Vacío. Mejor que la lleve un bot: el Núcleo aprende de quien se la entrega.',
+    ada: 'He leído la última página de Mireya. Ella tenía razón: no hay que combatirlo. Hay que enseñarle.',
+    done: (w) => w.finished,
+  },
+];

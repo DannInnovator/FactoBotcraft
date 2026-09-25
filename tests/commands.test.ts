@@ -1,0 +1,84 @@
+import { describe, expect, it } from 'vitest';
+import { loreRoutines } from '../src/content/lore';
+import { buyBot, canDescend, descend, fuseInstruction, loadProgram, mergeBots, traitOffers } from '../src/sim/commands';
+import { simulateOffline } from '../src/sim/offline';
+import { cloneFresh, mk } from '../src/sim/program';
+import { deserialize, serialize } from '../src/sim/save';
+import { createWorld } from '../src/sim/world';
+
+describe('comandos', () => {
+  it('la fusión de linaje sube de nivel y hereda rasgos', () => {
+    const w = createWorld(5);
+    w.lumen = 1000;
+    const [ex, ey] = w.layers[0].elevator;
+    const a = buyBot(w, ex + 1, ey + 1).bot!;
+    const b = buyBot(w, ex + 2, ey + 1).bot!;
+    a.traits = ['veloz'];
+    loadProgram(w, a, [mk('mover', { dir: 'E' })]);
+    const offer = traitOffers(w, a, b);
+    expect(offer).toHaveLength(3);
+    expect(offer).not.toContain('veloz');
+    const r = mergeBots(w, a.id, b.id, 'a', offer[0]);
+    expect(r.ok).toBe(true);
+    expect(r.bot!.lvl).toBe(2);
+    expect(r.bot!.traits).toEqual(['veloz', offer[0]]);
+    expect(r.bot!.program[0].op).toBe('mover');
+    expect(w.layers[0].bots.filter((x) => !x.captain)).toHaveLength(1);
+  });
+
+  it('descender exige el mineral y el Lumen', () => {
+    const w = createWorld(6);
+    w.lumen = 10_000;
+    expect(canDescend(w).ok).toBe(false);
+    w.delivered.cobre = 5;
+    expect(descend(w).ok).toBe(true);
+    expect(w.layers).toHaveLength(2);
+    expect(w.current).toBe(1);
+    expect(w.layers[1].bots.some((b) => b.captain)).toBe(true);
+    expect(w.layers[0].bots.some((b) => b.captain)).toBe(false);
+  });
+
+  it('el Taller desbloquea instrucciones', () => {
+    const w = createWorld(7);
+    w.lumen = 100;
+    expect(fuseInstruction(w, 'f-avanzar').ok).toBe(true);
+    expect(w.unlockedOps).toContain('avanzar');
+    expect(fuseInstruction(w, 'f-avanzar').ok).toBe(false);
+  });
+
+  it('la memoria limita el tamaño del programa', () => {
+    const w = createWorld(8);
+    w.lumen = 100;
+    const [ex, ey] = w.layers[0].elevator;
+    const b = buyBot(w, ex + 1, ey + 1).bot!;
+    const big = Array.from({ length: 20 }, () => mk('esperar'));
+    expect(loadProgram(w, b, big).ok).toBe(false);
+  });
+});
+
+describe('Turno de Noche y guardado', () => {
+  it('simula el tiempo fuera y proyecta el resto', () => {
+    const w = createWorld(9);
+    const l = w.layers[0];
+    l.bots[0].x = 1;
+    w.lumen = 100;
+    const b = buyBot(w, l.elevator[0] + 3, l.elevator[1] - 1).bot!;
+    b.lvl = 3;
+    loadProgram(w, b, cloneFresh(loreRoutines()[1].blocks));
+    const before = w.lumen;
+    const rep = simulateOffline(w, 2 * 3600 * 1000);
+    expect(rep.projected).toBe(true);
+    expect(rep.lumenEarned).toBeGreaterThan(0);
+    expect(rep.lumenProjected).toBeGreaterThan(rep.lumenEarned);
+    expect(w.lumen).toBe(before + rep.lumenEarned + rep.lumenProjected);
+    expect(rep.frames.length).toBeGreaterThan(50);
+  });
+
+  it('serializa y recupera el mundo', () => {
+    const w = createWorld(10);
+    w.lumen = 42;
+    const back = deserialize(serialize(w))!;
+    expect(back.lumen).toBe(42);
+    expect(back.layers[0].tiles.length).toBe(w.layers[0].tiles.length);
+  });
+});

@@ -1,4 +1,4 @@
-# FactoBotcraft — Documento de Diseño de Juego (GDD) v0.1
+# FactoBotcraft — Documento de Diseño de Juego (GDD) v0.2
 
 > **"Juega una vez. Tus bots juegan para siempre."**
 
@@ -163,7 +163,7 @@ Objetivo: probar que el **Pilar 1 + Pilar 2** son divertidos por sí solos.
 - Fusión de bots con elección de 1 de 3 rasgos.
 - Turno de noche simulado + Reporte del Amanecer básico (stats + incidentes, sin video).
 
-**Tecnología recomendada:** Godot 4. Es libre, maneja bien el 3D estilizado, exporta a PC, web y móvil (clave para el compañero móvil) y permite una **simulación determinista por ticks**, imprescindible para el idle offline, los fantasmas y los replays.
+**Tecnología elegida:** TypeScript + Three.js en el navegador (la v0.1 anterior recomendaba Godot 4). Se cambió por tres motivos: 1) el juego se puede **jugar al instante desde un enlace**, sin instalar nada, lo que es clave para la demo y para compartir; 2) la simulación determinista en TypeScript puro corre igual en el navegador, en las pruebas y en un futuro servidor del Gremio; 3) empaquetar para Steam (Tauri/Electron) y móvil (Capacitor/PWA) sigue siendo directo. Si el proyecto crece hacia consolas, la simulación se puede portar tal cual porque no depende del render.
 
 ## 10. Hoja de ruta
 
@@ -186,6 +186,30 @@ Objetivo: probar que el **Pilar 1 + Pilar 2** son divertidos por sí solos.
 | Nicho "juego de programación" | El jugador nunca ve la palabra "programar" en la primera hora: ve "grabar", "repetir" y "fusionar" |
 
 ---
+
+## 12. Estado de implementación (v0.2)
+
+Todo lo descrito en este documento está implementado y se puede jugar, salvo lo marcado como futuro.
+
+| Sistema | Estado | Notas |
+|---|---|---|
+| Pilar 1 · Juega → Graba → Programa | ✅ | Grabación con R, 3 tipos de sugerencia de ADA (patrón repetido, instrucciones seguidas, «si veta lista») que además **desbloquean** `repetir` y `si`. El bot se ensambla donde empezó la grabación. |
+| Pilar 2 · Todo se fusiona | ✅ | Minerales (12 niveles, valor ×2 más bonus de armonía), recetas de forja, **9 fusiones de instrucciones** en el Taller y fusión de bots. |
+| Pilar 3 · Linaje | ✅ | Herencia de código a elegir, rasgos acumulados y 1 rasgo nuevo entre 3; 9 rasgos con efecto real en la simulación. |
+| Pilar 4 · Turno de Noche | ✅ | 30 min simulados con exactitud y el resto proyectado (tope de 10 h). Reporte del Amanecer con incidentes enlazados al bloque exacto y timelapse cinematográfico con exportación de clip .webm. |
+| Pilar 5 · Gremio | 🟡 | Biblioteca con forks, autores, uso y **códigos FBC1 para compartir sin servidor**. Las regalías y el ranking global necesitan backend (futuro). |
+| Desafío Diario | ✅ | Semilla por fecha, variantes diarias y la marca de ADA calculada en vivo con su programa de referencia (que el jugador puede guardar y estudiar). Fantasmas y ranking global: futuro. |
+| 5 capas y peligros | ✅ | Forja, oscuridad con lámparas, lava que late, gravedad girada y Glitchlings. |
+| Historia | ✅ | 22 órdenes de trabajo, 10 páginas de diario, 13 entradas de Códex, 3 bots antiguos reparables y el final. Ver `docs/LORE.md`. |
+| Dirección visual | ✅ | Diorama 3D low-poly: luz cálida, bloom, tilt-shift, caras-pantalla con 8 estados de ánimo y partículas de fusión. |
+| Audio | ✅ | Sintetizado: fusiones pentatónicas, reverb de cueva y música generativa. |
+| Compañero móvil | 🟡 | La página ya funciona en móvil con controles táctiles; falta la app con guardado en la nube. |
+
+### Próximos pasos
+1. **Playtest** con 20–50 personas midiendo los KPIs de la sección 8 (sobre todo el tiempo hasta el Momento de Encendido).
+2. **Servidor del Gremio**: biblioteca compartida, regalías, fantasmas y ranking del Desafío Diario.
+3. **Pase de arte y sonido**: modelos a mano para los bots de cada nivel y música compuesta por capas.
+4. **Empaquetado**: Steam (Tauri) con logros, y app móvil compañera con guardado en la nube.
 
 ## Anexo — Cómo llegamos aquí (iteraciones)
 
