@@ -6,6 +6,7 @@ Un juego de automatización y fusión en una mina 3D. Juegas con tus manos, el j
 
 Referencias: *Craftomation 101* (programar bots), *Factorio* (cadenas de producción), *Minecraft* (excavación, luz y noche) y *MineMergeMatic* (fusión y progreso idle).
 
+- 🎮 **[Jugar en el navegador](https://claude.ai/artifact/7uvEEsNdTZR4SbgkCmTTUG)** (página privada: compártela desde su menú)
 - 📄 [Documento de diseño (GDD)](docs/GDD.md)
 - 📖 [Biblia del universo (lore)](docs/LORE.md)
 
