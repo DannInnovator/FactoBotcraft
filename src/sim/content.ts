@@ -1,5 +1,5 @@
 // Datos de diseño: minerales, recetas, rasgos, capas, instrucciones y economía.
-import type { CondKind, Item, OreKind, Op, TraitId } from './types';
+import type { Building, CondKind, Item, OreKind, Op, TileType, TraitId } from './types';
 
 export const TICKS_PER_SEC = 10;
 export const DAY_TICKS = 3600; // un ciclo día/noche = 6 minutos reales
@@ -196,18 +196,25 @@ export interface OpDef {
   icon: string; // nombre en src/ui/icons.ts
   desc: string;
   container?: boolean;
-  params?: ('dir' | 'n' | 'cond' | 'beacon' | 'color' | 'routine' | 'text')[];
+  params?: ('dir' | 'side' | 'n' | 'cond' | 'beacon' | 'color' | 'routine' | 'text')[];
   cat: 'accion' | 'control' | 'logistica' | 'señal' | 'otro';
 }
 
 export const OPS: Record<Op, OpDef> = {
   mover: { label: 'mover', icon: 'mover', desc: 'Avanza una casilla en la dirección indicada.', params: ['dir'], cat: 'accion' },
   picar: { label: 'picar', icon: 'picar', desc: 'Pica una veta (mineral a la mano) o excava una pared.', params: ['dir'], cat: 'accion' },
-  recoger: { label: 'recoger', icon: 'recoger', desc: 'Toma el mineral de la casilla actual.', cat: 'accion' },
+  recoger: {
+    label: 'recoger',
+    icon: 'recoger',
+    desc: 'Toma un mineral de tu casilla (·) o de la casilla vecina: suelo, cofre o máquina.',
+    params: ['side'],
+    cat: 'accion',
+  },
   soltar: {
     label: 'soltar',
     icon: 'soltar',
-    desc: 'Deja el mineral. Sobre uno igual: ¡fusión! En el montacargas: se vende.',
+    desc: 'Deja el mineral en tu casilla (·) o en la vecina. Sobre uno igual: ¡fusión! En el montacargas: se vende. También llena cofres y máquinas.',
+    params: ['side'],
     cat: 'accion',
   },
   esperar: { label: 'esperar', icon: 'esperar', desc: 'Espera N ticks (10 ticks = 1 s).', params: ['n'], cat: 'control' },
@@ -238,6 +245,9 @@ export const COND_LABEL: Record<CondKind, string> = {
   veta: 'veta lista hacia',
   nivel: 'nivel en mano ≥',
   senal: 'hay señal',
+  cofreVacio: 'vacío hacia',
+  parCofre: 'hay par en cofre hacia',
+  carga: 'carga de la red ≥',
 };
 
 // Taller de Código: fusionar dos instrucciones crea una nueva.
@@ -268,6 +278,83 @@ export function botCost(owned: number): number {
   return Math.round(20 * Math.pow(2.1, owned));
 }
 export const LAMP_COST = 15;
+
+// ---------- Edificios y energía ----------
+export interface BuildingDef {
+  name: string;
+  icon: string;
+  cost: number;
+  tile: TileType;
+  desc: string;
+  unlockHint: string;
+}
+
+export const BUILDINGS: Record<Building, BuildingDef> = {
+  cofre: {
+    name: 'Cofre',
+    icon: 'chest',
+    cost: 60,
+    tile: 'chest',
+    desc: 'Guarda hasta 12 minerales. Los bots lo usan desde cualquiera de sus 4 lados: es el buzón entre bots.',
+    unlockHint: 'Ten dos bots trabajando a la vez.',
+  },
+  forja: {
+    name: 'Forja',
+    icon: 'forge',
+    cost: 150,
+    tile: 'forge',
+    desc: 'Máquina: echa dos minerales distintos compatibles (hierro + carbón) y los funde en acero. Gasta 4 de carga por pieza.',
+    unlockHint: 'Llega a la Veta de Hierro.',
+  },
+  dinamo: {
+    name: 'Dínamo',
+    icon: 'dynamo',
+    cost: 200,
+    tile: 'dynamo',
+    desc: 'Convierte en carga cualquier mineral que le eches (el carbón rinde ×4). La carga mueve máquinas y bots de nivel 3+.',
+    unlockHint: 'Construye tu primera forja.',
+  },
+  crisol: {
+    name: 'Crisol de armonía',
+    icon: 'crucible',
+    cost: 600,
+    tile: 'crucible',
+    desc: 'Máquina: fusiona sola las parejas iguales que tenga dentro (hasta 8 minerales). Lenta y gasta carga: un buen bot fusionador es más rápido.',
+    unlockHint: 'Ten un bot de nivel 3 y genera 200 de carga con dínamos.',
+  },
+  acumulador: {
+    name: 'Acumulador',
+    icon: 'battery',
+    cost: 400,
+    tile: 'battery',
+    desc: 'Añade 800 de capacidad a la red eléctrica de la capa.',
+    unlockHint: 'Llega a las Grutas de Cristal.',
+  },
+  turbina: {
+    name: 'Turbina de lava',
+    icon: 'turbine',
+    cost: 1500,
+    tile: 'turbine',
+    desc: 'Se construye sobre lava. Genera carga sola cada vez que la lava late.',
+    unlockHint: 'Llega a la Forja de Magma.',
+  },
+};
+
+export const CHEST_CAP = 12;
+export const CRUCIBLE_CAP = 8;
+export const FORGE_CAP = 3;
+export const CRUCIBLE_TICKS = 50; // una fusión cada 5 s
+export const FORGE_TICKS = 30;
+export const BASE_ENERGY_CAP = 300;
+export const BATTERY_CAP = 800;
+export const TURBINE_OUTPUT = 0.6; // carga por tick con la lava caliente
+export const ENERGY_COST = { move: 0.3, mine: 1, dig: 1, pick: 0.2, drop: 0.2, wait: 0, restore: 0 } as const;
+export const ELECTRIC_LVL = 3; // desde este nivel los bots llevan motor eléctrico
+
+/** Carga que produce un mineral al echarlo en un dínamo. */
+export function energyValue(it: Item): number {
+  return Math.round(itemValue(it) * (it.kind === 'carbon' ? 4 : 1));
+}
 export const FORGE_COST = 150;
 export const RESTORE_COST = 5;
 export const REPAIR_COST = [0, 400, 3000, 25000, 0]; // por índice de capa

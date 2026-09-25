@@ -9,6 +9,7 @@ import {
   fusionAvailable,
   goToLayer,
   loadProgram,
+  makeFunction,
   mergeBots,
   nextBotCost,
   restartProgram,
@@ -17,11 +18,11 @@ import {
   saveRoutine,
   traitOffers,
 } from '../sim/commands';
-import { FUSIONS, LAYERS, OPS, ORES, REPAIR_COST, TRAITS, itemLabel, memoryFor } from '../sim/content';
+import { BUILDINGS, FUSIONS, LAYERS, OPS, ORES, REPAIR_COST, TRAITS, itemLabel, memoryFor } from '../sim/content';
 import type { DawnReport } from '../sim/offline';
 import { cloneExact, cloneFresh, countBlocks, decodeRoutine, encodeRoutine, programToText, suggest } from '../sim/program';
 import { clearLocal, deserialize, getPref, serialize, setPref } from '../sim/save';
-import type { Block, Bot, TraitId } from '../sim/types';
+import type { Block, Bot, Building, TraitId } from '../sim/types';
 import { setProgram } from '../sim/world';
 import { add, copyText, fmt, fmtTime, h } from './dom';
 import { CAT_COLOR, ProgramEditor } from './editor';
@@ -177,6 +178,7 @@ export function sidePanel(g: Game, bot: Bot, tab: 'prog' | 'ficha', onTab: (t: '
       h('h2', {}, bot.name),
       bot.captain ? null : h('span', { class: 'lvl-badge' }, `nv${bot.lvl}`),
       bot.captain ? null : h('span', { class: `status-pill ${bot.status}` }, STATUS_TXT[bot.status]),
+      !bot.captain && bot.lowPower && bot.lvl >= 3 ? h('span', { class: 'status-pill power', title: 'Motor eléctrico sin carga: trabaja a mitad de velocidad' }, 'sin carga') : null,
       h('button', { class: 'btn ghost small x', 'aria-label': 'Cerrar', onclick: () => g.selectBot(null) }, icon('close', 16)),
     ),
   );
@@ -562,7 +564,14 @@ export function libraryModal(g: Game, focus?: string): void {
       const bot = g.botById(g.selected);
       let ed: ProgramEditor | null = null;
       if (own) {
-        ed = new ProgramEditor(r.blocks, { ops: () => g.world.unlockedOps, conds: () => g.world.unlockedConds, library: () => g.world.library, memory: null, click: () => g.audio.click() });
+        ed = new ProgramEditor(r.blocks, {
+          ops: () => g.world.unlockedOps,
+          conds: () => g.world.unlockedConds,
+          library: () => g.world.library,
+          memory: null,
+          click: () => g.audio.click(),
+          makeFunction: (list, from, to, name) => makeFunction(g.world, list, from, to, name),
+        });
       }
       right = h(
         'div',
@@ -1369,3 +1378,115 @@ export function endingModal(g: Game, bot: Bot | null): void {
   g.ui.appendChild(el);
 }
 
+
+// ---------- Construir ----------
+export function buildModal(g: Game): void {
+  let modal: { close: () => void } | null = null;
+  g.world.flags.newBuild = 0;
+  const pick = (fn: () => void) => () => {
+    modal?.close();
+    fn();
+  };
+  const w = g.world;
+  const l = g.layer();
+  const cards = (Object.keys(BUILDINGS) as Building[]).map((b) => {
+    const d = BUILDINGS[b];
+    const open = w.buildings.includes(b);
+    const afford = w.lumen >= d.cost;
+    return h(
+      'div',
+      { class: `card ${open ? (afford ? 'ready' : '') : ''}`, style: open ? '' : 'opacity:.55' },
+      h('div', { class: 'row' }, icon(open ? d.icon : 'close', 22), h('h3', {}, open ? d.name : `${d.name} · bloqueado`)),
+      h('span', { style: 'font-size:13px' }, d.desc),
+      open
+        ? h(
+            'div',
+            { class: 'row' },
+            h('span', { class: 'num', style: 'color:var(--lamp)' }, `${fmt(d.cost)} ✦`),
+            h(
+              'button',
+              {
+                class: `btn small ${afford ? 'primary' : ''}`,
+                disabled: !afford,
+                onclick: pick(() => {
+                  g.buildKind = b;
+                  g.setMode('build');
+                }),
+              },
+              'Colocar',
+            ),
+          )
+        : h('span', { class: 'label', style: 'color:var(--crystal)' }, `Cómo se desbloquea: ${d.unlockHint}`),
+    );
+  });
+  modal = g.modals.show({
+    title: 'Construir',
+    cls: 'wide',
+    body: h(
+      'div',
+      { class: 'stack' },
+      h(
+        'p',
+        { style: 'margin:0' },
+        'Cofres y máquinas son sólidos: los bots los usan desde cualquiera de sus 4 lados con «soltar» y «recoger» apuntando hacia ellos. ',
+        w.buildings.includes('dinamo') ? `Red eléctrica de esta capa: ${Math.floor(l.energy)} / ${l.energyCap} de carga.` : '',
+      ),
+      h('div', { class: 'cards' }, cards),
+      h(
+        'div',
+        { class: 'row' },
+        w.unlockedOps.includes('irA') ? h('button', { class: 'btn', onclick: pick(() => beaconPicker(g)) }, icon('beacon', 16), 'Clavar baliza') : null,
+        h('button', { class: 'btn ghost', onclick: pick(() => g.setMode('remove')) }, icon('remove', 16), 'Desmontar un edificio'),
+      ),
+    ),
+  });
+}
+
+// ---------- Información de cofres y máquinas ----------
+export function machineModal(g: Game, x: number, y: number): void {
+  const l = g.layer();
+  const t = l.tiles[y * l.w + x];
+  const entry = (Object.values(BUILDINGS) as (typeof BUILDINGS)[Building][]).find((d) => d.tile === t.t);
+  const name = t.t === 'elevator' ? 'Montacargas' : entry?.name ?? 'Máquina';
+  const st = t.store ?? [];
+  const cap = t.t === 'chest' ? 12 : t.t === 'crucible' ? 8 : t.t === 'forge' ? 3 : 0;
+  let modal: { close: () => void } | null = null;
+  modal = g.modals.show({
+    title: name,
+    cls: 'narrow',
+    body: h(
+      'div',
+      { class: 'stack' },
+      entry ? h('p', { style: 'margin:0' }, entry.desc) : null,
+      t.store
+        ? h(
+            'div',
+            {},
+            h('div', { class: 'label' }, `Contenido (${st.length}/${cap})`),
+            st.length
+              ? h('div', { class: 'traits', style: 'margin-top:6px' }, st.map((it) => h('span', { class: 'trait' }, itemLabel(it))))
+              : h('p', { style: 'margin:4px 0;color:var(--muted)' }, 'Vacío.'),
+          )
+        : null,
+      g.world.buildings.includes('dinamo') ? h('p', { style: 'margin:0' }, `Red eléctrica de esta capa: ${Math.floor(l.energy)} / ${l.energyCap} de carga.`) : null,
+      h('p', { style: 'margin:0;color:var(--muted);font-size:13px' }, 'Los bots lo usan desde cualquiera de sus 4 lados: «soltar» o «recoger» apuntando hacia aquí.'),
+    ),
+    footer: [
+      entry
+        ? h(
+            'button',
+            {
+              class: 'btn ghost danger',
+              onclick: () => {
+                modal?.close();
+                g.setMode('remove');
+              },
+            },
+            icon('remove', 16),
+            'Desmontar…',
+          )
+        : h('span'),
+      h('button', { class: 'btn primary', onclick: () => modal?.close() }, 'Cerrar'),
+    ],
+  });
+}

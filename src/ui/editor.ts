@@ -1,7 +1,7 @@
 // Editor visual de programas por bloques: insertar con cursor, anidar, editar
 // parámetros y ver en vivo qué bloque ejecuta el bot.
 import { COND_LABEL, OPS, type OpDef } from '../sim/content';
-import { countBlocks, mk } from '../sim/program';
+import { memoryUse, mk } from '../sim/program';
 import { COLORS, DIR_ARROW, type Block, type CondKind, type Dir, type Op, type Routine } from '../sim/types';
 import { h } from './dom';
 import { icon } from './icons';
@@ -21,6 +21,8 @@ export interface EditorCtx {
   memory: number | null;
   onChange?: () => void;
   click?: () => void;
+  /** Encapsula los bloques [from, to] de una lista en una función nueva. */
+  makeFunction?: (list: Block[], from: number, to: number, name: string) => Routine | null;
 }
 
 export class ProgramEditor {
@@ -32,6 +34,7 @@ export class ProgramEditor {
   private codeEl!: HTMLElement;
   private memEl!: HTMLElement;
   private curId = 0;
+  private sel: { list: Block[]; a: number; b: number } | null = null;
 
   constructor(draft: Block[], ctx: EditorCtx) {
     this.draft = draft;
@@ -56,12 +59,12 @@ export class ProgramEditor {
     const scroll = this.codeEl?.scrollTop ?? 0;
     this.el.innerHTML = '';
     this.blockEls.clear();
-    const used = countBlocks(this.draft);
+    const used = memoryUse(this.draft, this.ctx.library());
     const mem = this.ctx.memory;
     this.memEl = h(
       'div',
       { class: `mem ${mem !== null && used > mem ? 'over' : ''}` },
-      h('span', {}, 'Memoria'),
+      h('span', { title: 'Incluye el cuerpo de cada función usada, contado una vez' }, 'Memoria'),
       h('div', { class: 'meter' }, h('i', { style: `width:${mem ? Math.min(100, (used / mem) * 100) : 0}%` })),
       h('span', { class: 'num' }, mem !== null ? `${used}/${mem}` : `${used} bloques`),
     );
@@ -92,7 +95,20 @@ export class ProgramEditor {
         ),
       );
     }
-    this.el.append(this.memEl, this.codeEl, h('div', { class: 'label' }, 'Paleta · pulsa para insertar'), palette);
+    // Funciones: cada una es un bloque propio en la paleta
+    const fns = this.ctx.ops().includes('llamar') ? this.ctx.library().filter((r) => r.fn) : [];
+    for (const r of fns) {
+      palette.appendChild(
+        h(
+          'button',
+          { class: 'fn', style: `--cat:${CAT_COLOR.control}`, title: `Función «${r.name}» (${r.blocks.length} bloques)`, onclick: () => this.insert('llamar', r.id) },
+          icon('func', 15),
+          r.name,
+        ),
+      );
+    }
+    const selBar = this.sel ? this.selectionBar() : null;
+    this.el.append(this.memEl, ...(selBar ? [selBar] : []), this.codeEl, h('div', { class: 'label' }, 'Paleta · pulsa para insertar'), palette);
     this.codeEl.scrollTop = scroll;
     this.highlight(this.curId);
   }
@@ -131,7 +147,7 @@ export class ProgramEditor {
 
   private renderBlock(b: Block, list: Block[], i: number): HTMLElement {
     const def = OPS[b.op];
-    const row = h('div', { class: `blk ${b.corrupt ? 'corrupt' : ''}`, style: `--cat:${CAT_COLOR[def.cat]}`, role: 'listitem' });
+    const row = h('div', { class: `blk ${b.corrupt ? 'corrupt' : ''} ${this.inSel(list, i) ? 'sel' : ''}`, style: `--cat:${CAT_COLOR[def.cat]}`, role: 'listitem' });
     row.append(h('span', { class: 'ic' }, icon(def.icon, 15)), h('span', { class: 'nm' }, def.label));
     const set = () => {
       delete b.corrupt;
@@ -139,6 +155,7 @@ export class ProgramEditor {
     };
     for (const p of def.params ?? []) {
       if (p === 'dir') row.appendChild(this.dirPicker(b.dir ?? 'E', (d) => ((b.dir = d), set())));
+      if (p === 'side') row.appendChild(this.sidePicker(b.dir, (d) => ((b.dir = d), set())));
       if (p === 'n')
         row.append(
           h('input', {
@@ -188,12 +205,25 @@ export class ProgramEditor {
         { class: 'tools' },
         h('button', { title: 'Subir', 'aria-label': 'Subir', onclick: () => this.move(list, i, -1) }, '↑'),
         h('button', { title: 'Bajar', 'aria-label': 'Bajar', onclick: () => this.move(list, i, 1) }, '↓'),
+        this.ctx.makeFunction && this.ctx.ops().includes('llamar')
+          ? h('button', { title: 'Seleccionar para encapsular en una función', 'aria-label': 'Seleccionar para función', class: this.inSel(list, i) ? 'on' : '', onclick: () => this.toggleSel(list, i) }, icon('func', 13))
+          : null,
         h('button', { title: 'Duplicar', 'aria-label': 'Duplicar', onclick: () => this.dup(list, i) }, icon('copy', 13)),
         h('button', { title: 'Borrar', 'aria-label': 'Borrar', onclick: () => this.remove(list, i) }, icon('close', 13)),
       ),
     );
     this.blockEls.set(b.id, row);
     return row;
+  }
+
+  /** Aquí (·) o una casilla vecina. */
+  private sidePicker(cur: Dir | undefined, onPick: (d: Dir | undefined) => void): HTMLElement {
+    const box = h('span', { class: 'dirs', role: 'group', 'aria-label': 'Dónde' });
+    box.appendChild(h('button', { class: !cur ? 'on' : '', title: 'En su propia casilla', 'aria-label': 'Aquí', onclick: () => onPick(undefined) }, '·'));
+    for (const d of ['N', 'S', 'W', 'E'] as Dir[]) {
+      box.appendChild(h('button', { class: d === cur ? 'on' : '', title: 'En la casilla vecina', 'aria-label': d, onclick: () => onPick(d) }, DIR_ARROW[d]));
+    }
+    return box;
   }
 
   private dirPicker(cur: Dir, onPick: (d: Dir) => void): HTMLElement {
@@ -255,9 +285,50 @@ export class ProgramEditor {
     if (c.c === 'senal') row.appendChild(this.select(COLORS, c.color ?? 'rojo', (v) => ((c.color = v as Block['color']), set())));
   }
 
-  insert(op: Op): void {
-    const b = mk(op);
-    if (b.op === 'llamar') {
+  // ---------- Selección para funciones ----------
+  private inSel(list: Block[], i: number): boolean {
+    const s = this.sel;
+    return !!s && s.list === list && i >= Math.min(s.a, s.b) && i <= Math.max(s.a, s.b);
+  }
+
+  private toggleSel(list: Block[], i: number): void {
+    if (!this.sel || this.sel.list !== list) this.sel = { list, a: i, b: i };
+    else if (this.sel.a === i && this.sel.b === i) this.sel = null;
+    else this.sel.b = i;
+    this.ctx.click?.();
+    this.render();
+  }
+
+  private selectionBar(): HTMLElement {
+    const s = this.sel!;
+    const n = Math.abs(s.b - s.a) + 1;
+    const name = h('input', { type: 'text', placeholder: 'nombre de la función', 'aria-label': 'Nombre de la función', value: '', style: 'max-width:170px' }) as HTMLInputElement;
+    return h(
+      'div',
+      { class: 'selbar' },
+      icon('func', 15),
+      h('span', { title: 'Pulsa ƒ en otro bloque del mismo nivel para ampliar la selección' }, `${n} ${n === 1 ? 'bloque seleccionado' : 'bloques seleccionados'} · amplía con ƒ en otro bloque del mismo nivel`),
+      name,
+      h(
+        'button',
+        {
+          class: 'btn small primary',
+          onclick: () => {
+            const r = this.ctx.makeFunction?.(s.list, s.a, s.b, name.value.trim() || `función ${this.ctx.library().filter((x) => x.fn).length + 1}`);
+            if (!r) return;
+            this.sel = null;
+            this.changed();
+          },
+        },
+        'Crear función',
+      ),
+      h('button', { class: 'btn small ghost', onclick: () => ((this.sel = null), this.render()) }, 'Cancelar'),
+    );
+  }
+
+  insert(op: Op, routine?: string): void {
+    const b = mk(op, routine ? { routine } : {});
+    if (b.op === 'llamar' && !routine) {
       const lib = this.ctx.library();
       if (lib.length) b.routine = lib[0].id;
     }

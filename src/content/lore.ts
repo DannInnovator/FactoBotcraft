@@ -77,6 +77,18 @@ export const CODEX: CodexEntry[] = [
     text: 'Dos minerales distintos no pueden fundirse por armonía, pero sí por calor. En la forja, el hierro y el carbón se vuelven acero; el oro y la obsidiana, obsidoro. El producto hereda el nivel más bajo de los dos: la forja no perdona los desequilibrios.',
   },
   {
+    id: 'red',
+    title: 'La red de Konstrukta',
+    cat: 'Ciencia',
+    text: 'Un mineral echado a un dínamo no se vende: se quema, y su canción se convierte en carga. El Gremio discutía cada invierno qué parte de la producción debía subir a Alba y cuál debía quedarse abajo, moviendo la mina. Mireya lo resumía así: «una ciudad a oscuras no enciende una mina, y una mina parada no enciende una ciudad».',
+  },
+  {
+    id: 'crisol',
+    title: 'El crisol de armonía',
+    cat: 'Ciencia',
+    text: 'Un cuenco de latón que hace sola la fusión que antes hacían las manos. Es lento y bebe carga, y los mineros viejos desconfiaban de él: «el crisol no se equivoca, pero tampoco aprende». Aun así, en las capas profundas no había mina sin crisoles.',
+  },
+  {
     id: 'glitchlings',
     title: 'Glitchlings',
     cat: 'Criaturas',
@@ -226,9 +238,9 @@ export function loreRoutines(): { id: string; name: string; author: string; bloc
           cond: { c: 'manoLlena' },
           body: [
             mk('mover', { dir: 'S' }),
-            mk('repetir', { n: 3, body: [mk('mover', { dir: 'W' })] }),
-            mk('soltar'),
-            mk('repetir', { n: 3, body: [mk('mover', { dir: 'E' })] }),
+            mk('repetir', { n: 2, body: [mk('mover', { dir: 'W' })] }),
+            mk('soltar', { dir: 'W' }),
+            mk('repetir', { n: 2, body: [mk('mover', { dir: 'E' })] }),
             mk('mover', { dir: 'N' }),
           ],
         }),

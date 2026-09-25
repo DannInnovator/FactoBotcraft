@@ -96,7 +96,8 @@ export const STEPS: Step[] = [
   {
     chapter: 0,
     title: 'Envíalo a Alba',
-    text: () => `Lleva el cobre al montacargas (la plataforma con el anillo de luz) y pulsa ${USE()} encima. Así se vende por Lumen (✦).`,
+    text: () =>
+      `Lleva el cobre al montacargas (la plataforma con el anillo de luz). Es sólido: acércate y sigue caminando hacia él para quedarte mirándolo; entonces pulsa ${USE()}. Así se vende por Lumen (✦). Funciona desde cualquiera de sus 4 lados.`,
     tile: (g) => (inGallery(g) ? room(g).elev : null),
     tileLabel: 'Montacargas',
     enter: (g, c) => (c.sold = g.world.stats.sold),
@@ -137,7 +138,7 @@ export const STEPS: Step[] = [
     chapter: 1,
     title: 'Haz el trabajo una vez',
     text: () =>
-      `Sigue el recorrido numerado: pica la veta (→), baja una casilla, camina a la izquierda hasta el montacargas, pulsa ${USE()} para vender y vuelve por el mismo camino hasta la casilla de inicio. Si la veta aún se regenera, espera a que crezcan sus cristales.`,
+      `Sigue el recorrido numerado: pica la veta (→), baja una casilla, camina a la izquierda hasta quedar junto al montacargas, empuja hacia él para mirarlo, pulsa ${USE()} para vender y vuelve por el mismo camino hasta la casilla de inicio. Si la veta aún se regenera, espera a que crezcan sus cristales.`,
     path: (g) => {
       if (!inGallery(g)) return [];
       const [sx, sy] = room(g).start;
@@ -146,7 +147,6 @@ export const STEPS: Step[] = [
         [sx, sy + 1],
         [sx - 1, sy + 1],
         [sx - 2, sy + 1],
-        [sx - 3, sy + 1],
       ];
     },
     done: (g) => {
@@ -253,6 +253,25 @@ export const STEPS: Step[] = [
     text: () =>
       'Con «Bot» ensamblas bots nuevos en cualquier casilla de suelo; el precio sube con cada uno. Con «Lámpara» cuelgas luces en las paredes: iluminan, ahuyentan a los Glitchlings y, en las capas oscuras, dejan que tus bots vean las vetas.',
     target: tool('Bot'),
+  },
+  {
+    chapter: 3,
+    title: 'Construir: cofres y máquinas',
+    text: () =>
+      'En «Construir» aparecen los edificios a medida que los desbloqueas con las órdenes de trabajo: el cofre (un buzón entre bots), la forja, el dínamo, el crisol de armonía… Todos son sólidos y se usan desde cualquiera de sus 4 lados: «soltar →» y «recoger →» apuntando hacia ellos. Así varios bots trabajan con el mismo cofre sin pisarse. Pulsa un cofre o una máquina para ver lo que tiene dentro.',
+    target: tool('Construir'),
+  },
+  {
+    chapter: 3,
+    title: 'La red eléctrica',
+    text: () =>
+      'Más adelante, cada capa tiene su propia red de carga. La generas echando minerales a un dínamo (el carbón rinde ×4) o con turbinas sobre la lava. La gastan la forja, el crisol y los bots de nivel 3 o más: sin carga, esos bots trabajan a mitad de velocidad. Cada mineral es una decisión: venderlo para Alba o quemarlo para la mina.',
+  },
+  {
+    chapter: 3,
+    title: 'Funciones',
+    text: () =>
+      'Cuando fusiones «repetir + repetir» en el Taller, podrás encapsular: en el editor, pulsa ƒ en el primer bloque y en el último que quieras agrupar, ponle nombre y pulsa «Crear función». La función aparece en la paleta como un bloque propio. En memoria cuenta una sola vez aunque la uses mucho, y si la mejoras en la Biblioteca, mejora en todos tus bots.',
   },
   {
     chapter: 3,

@@ -47,7 +47,8 @@ export function challengeWorld(def: ChallengeDef): World {
     layers: [layer],
     current: 0,
     unlockedOps: Object.keys(OPS) as Op[],
-    unlockedConds: [...BASE_CONDS, 'nivel', 'senal'],
+    unlockedConds: [...BASE_CONDS, 'nivel', 'senal', 'cofreVacio', 'parCofre', 'carga'],
+    buildings: [],
     fusedRecipes: [],
     library: [],
     quests: { done: [], active: null },
@@ -106,7 +107,7 @@ export function runChallenge(def: ChallengeDef, programs: Block[][]): ChallengeR
 export function adaProgram(def: ChallengeDef): Block[] {
   const row = def.goalLvl - 1; // casillas de la fila (niveles 1..goal-1)
   const endX = 6 - row; // la fila va de x=5 hacia el oeste
-  const toElev = 3 - endX; // pasos al este desde el final de la fila
+  const toElev = 3 - endX; // pasos al este hasta quedar justo encima del montacargas
   const horiz = (n: number, d: 'E' | 'W') => (n > 0 ? [mk('repetir', { n, body: [mk('mover', { dir: d })] })] : []);
   return [
     mk('nota', { text: 'ADA: cada casilla guarda un nivel; al juntar dos, llevo el resultado a la siguiente.' }),
@@ -129,7 +130,7 @@ export function adaProgram(def: ChallengeDef): Block[] {
         }),
         mk('si', {
           cond: { c: 'manoLlena' },
-          body: [mk('mover', { dir: 'S' }), ...horiz(toElev, 'E'), mk('soltar'), ...horiz(toElev, 'W'), mk('mover', { dir: 'N' })],
+          body: [...horiz(toElev, 'E'), mk('soltar', { dir: 'S' }), ...horiz(toElev, 'W')],
         }),
         mk('repetir', { n: row, body: [mk('mover', { dir: 'E' })] }),
       ],

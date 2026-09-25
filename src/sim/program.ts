@@ -1,7 +1,7 @@
 // Utilidades sobre programas (listas de bloques): creación, clonado, conteo,
 // descripción textual, códigos para compartir y sugerencias de generalización.
 import { COND_LABEL, OPS } from './content';
-import { DIR_ARROW, type Block, type Cond, type Op } from './types';
+import { DIR_ARROW, type Block, type Cond, type Op, type Routine } from './types';
 
 let seq = 1;
 
@@ -39,6 +39,34 @@ export function walk(blocks: Block[], fn: (b: Block, parent: Block[]) => void): 
     if (b.body) walk(b.body, fn);
     if (b.alt) walk(b.alt, fn);
   }
+}
+
+/**
+ * Memoria que ocupa un programa en un bot: sus bloques más el cuerpo de cada
+ * función que usa, contado una sola vez aunque se llame muchas veces.
+ */
+export function memoryUse(blocks: Block[], library: Routine[]): number {
+  const seen = new Set<string>();
+  let total = countBlocks(blocks);
+  const visit = (list: Block[]) =>
+    walk(list, (b) => {
+      if (b.op !== 'llamar' || !b.routine || seen.has(b.routine)) return;
+      seen.add(b.routine);
+      const r = library.find((x) => x.id === b.routine);
+      if (!r) return;
+      total += countBlocks(r.blocks);
+      visit(r.blocks);
+    });
+  visit(blocks);
+  return total;
+}
+
+/** Sustituye los bloques [from, to] de una lista por una llamada a una función nueva. */
+export function extractFunction(list: Block[], from: number, to: number, routineId: string): Block[] {
+  const a = Math.max(0, Math.min(from, to));
+  const b = Math.min(list.length - 1, Math.max(from, to));
+  const taken = list.splice(a, b - a + 1, mk('llamar', { routine: routineId }));
+  return taken;
 }
 
 export function countBlocks(blocks: Block[]): number {
@@ -115,6 +143,9 @@ export function blockText(b: Block, routineName?: (id: string) => string): strin
     case 'picar':
     case 'avanzar':
       return `${def.label} ${DIR_ARROW[b.dir ?? 'E']}`;
+    case 'soltar':
+    case 'recoger':
+      return b.dir ? `${def.label} ${DIR_ARROW[b.dir]}` : def.label;
     case 'esperar':
       return `esperar ${b.n}`;
     case 'repetir':

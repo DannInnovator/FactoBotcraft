@@ -215,6 +215,19 @@ h3 {
 .gauge.alba .v {
   color: #ffe9a8;
 }
+.gauge.energy .v {
+  color: var(--crystal);
+}
+.gauge.energy .bar > i {
+  background: linear-gradient(90deg, #3e9f96, var(--crystal));
+}
+.gauge.energy .label .ico-wrap {
+  color: var(--crystal);
+}
+.status-pill.power {
+  background: #1d3434;
+  color: #9fe8df;
+}
 .gauge .bar {
   height: 3px;
   background: #3a2e3a;
@@ -1620,4 +1633,36 @@ input.txt {
     width: 14px;
     height: 14px;
   }
+}
+
+/* ---------- Funciones ---------- */
+.blk.sel {
+  box-shadow: 0 0 0 1px var(--crystal);
+  background: #17302d;
+}
+.blk .tools button.on {
+  color: var(--crystal);
+}
+.selbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 7px 9px;
+  border-radius: 8px;
+  background: #143532;
+  border: 1px solid #3e6a66;
+  color: var(--crystal);
+  font-size: 12.5px;
+}
+.selbar input {
+  background: #0f2624;
+  border: 1px solid #3e6a66;
+  border-radius: 5px;
+  padding: 3px 6px;
+  color: var(--paper);
+}
+.palette button.fn {
+  border-style: dashed;
+  border-left-style: solid;
 }

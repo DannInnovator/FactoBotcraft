@@ -451,3 +451,103 @@ export function makeGlitch(): THREE.Group {
   g.add(m, m2);
   return g;
 }
+
+// ---------- Edificios de automatización ----------
+export function makeChest(): THREE.Group {
+  const g = new THREE.Group();
+  const wood = std(0x7a5234, { roughness: 0.85 });
+  const brass = std(0xc9a063, { metalness: 0.6, roughness: 0.35 });
+  const body = new THREE.Mesh(new RoundedBoxGeometry(0.78, 0.46, 0.62, 2, 0.05), wood);
+  body.position.y = 0.23;
+  const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.31, 0.31, 0.78, 12, 1, false, 0, Math.PI), wood);
+  lid.rotation.z = Math.PI / 2;
+  lid.position.y = 0.46;
+  for (const x of [-0.26, 0.26]) {
+    const band = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.48, 0.64), brass);
+    band.position.set(x, 0.24, 0);
+    g.add(band);
+  }
+  const lock = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.12, 0.04), brass);
+  lock.position.set(0, 0.36, 0.32);
+  for (const m of [body, lid]) m.castShadow = m.receiveShadow = true;
+  g.add(body, lid, lock);
+  return g;
+}
+
+export function makeCrucible(): THREE.Group {
+  const g = new THREE.Group();
+  const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.26, 0.5, 14, 1, true), std(0x3a2e3a, { metalness: 0.5, roughness: 0.4, side: THREE.DoubleSide }));
+  pot.position.y = 0.35;
+  pot.castShadow = true;
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.035, 6, 24), std(0xc9a063, { metalness: 0.6, roughness: 0.35 }));
+  rim.rotation.x = Math.PI / 2;
+  rim.position.y = 0.6;
+  const liquid = new THREE.Mesh(new THREE.CircleGeometry(0.33, 20), new THREE.MeshStandardMaterial({ color: 0xffb85c, emissive: 0xff9a3c, emissiveIntensity: 1.6 }));
+  liquid.rotation.x = -Math.PI / 2;
+  liquid.position.y = 0.52;
+  liquid.name = 'liquid';
+  for (const a of [0, (Math.PI * 2) / 3, (Math.PI * 4) / 3]) {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, 0.2, 5), std(0x2a2226));
+    leg.position.set(Math.cos(a) * 0.22, 0.1, Math.sin(a) * 0.22);
+    g.add(leg);
+  }
+  g.add(pot, rim, liquid);
+  return g;
+}
+
+export function makeDynamo(): THREE.Group {
+  const g = new THREE.Group();
+  const base = new THREE.Mesh(new RoundedBoxGeometry(0.72, 0.2, 0.6, 2, 0.05), std(0x3a3440, { metalness: 0.4 }));
+  base.position.y = 0.1;
+  const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.5, 16), std(0xb87333, { metalness: 0.7, roughness: 0.3 }));
+  drum.rotation.z = Math.PI / 2;
+  drum.position.y = 0.42;
+  drum.name = 'drum';
+  const coil = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.03, 6, 20), glowMat(0x6fe3d6, 1.4));
+  coil.rotation.y = Math.PI / 2;
+  coil.position.y = 0.42;
+  coil.name = 'coil';
+  const hopper = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.08, 0.18, 8, 1, true), std(0x5a4a3a, { side: THREE.DoubleSide }));
+  hopper.position.set(0, 0.72, 0);
+  for (const m of [base, drum]) m.castShadow = true;
+  g.add(base, drum, coil, hopper);
+  return g;
+}
+
+export function makeBattery(): THREE.Group {
+  const g = new THREE.Group();
+  const shell = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.9, 16, 1, true), new THREE.MeshStandardMaterial({ color: 0x9fc4ff, transparent: true, opacity: 0.25, roughness: 0.1, side: THREE.DoubleSide }));
+  shell.position.y = 0.5;
+  const fill = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.21, 0.8, 14), glowMat(0x6fe3d6, 1.3));
+  fill.position.y = 0.1;
+  fill.name = 'fill';
+  const capTop = new THREE.Mesh(new THREE.CylinderGeometry(0.29, 0.29, 0.08, 16), std(0xc9a063, { metalness: 0.6 }));
+  capTop.position.y = 0.97;
+  const capBot = capTop.clone();
+  capBot.position.y = 0.04;
+  capTop.castShadow = true;
+  g.add(shell, fill, capTop, capBot);
+  return g;
+}
+
+export function makeTurbine(): THREE.Group {
+  const g = new THREE.Group();
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.09, 0.8, 8), std(0x4a3a36, { metalness: 0.5 }));
+  post.position.y = 0.4;
+  const rotor = new THREE.Group();
+  rotor.position.y = 0.8;
+  rotor.name = 'rotor';
+  for (let i = 0; i < 3; i++) {
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.03, 0.12), std(0xc9a063, { metalness: 0.6, roughness: 0.35 }));
+    blade.position.x = 0.23;
+    const arm = new THREE.Group();
+    arm.rotation.y = (i * Math.PI * 2) / 3;
+    arm.add(blade);
+    rotor.add(arm);
+  }
+  const hub = new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 8), glowMat(0xff7a3d, 1.5));
+  rotor.add(hub);
+  post.castShadow = true;
+  g.add(post, rotor);
+  return g;
+}

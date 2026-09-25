@@ -46,16 +46,16 @@ describe('máquina virtual', () => {
     const { world, l, ey } = setup();
     const bot = makeBot(world, 6, ey - 1);
     l.bots.push(bot);
-    // picar →, ir al montacargas (3,ey): 3 al oeste y 1 al sur, soltar, volver
+    // picar →, bajar, 2 al oeste y soltar hacia el montacargas (3,ey), volver
     setProgram(bot, [
       mk('si', { cond: { c: 'veta', dir: 'E' }, body: [mk('picar', { dir: 'E' })] }),
       mk('si', {
         cond: { c: 'manoLlena' },
         body: [
           mk('mover', { dir: 'S' }),
-          mk('repetir', { n: 3, body: [mk('mover', { dir: 'W' })] }),
-          mk('soltar'),
-          mk('repetir', { n: 3, body: [mk('mover', { dir: 'E' })] }),
+          mk('repetir', { n: 2, body: [mk('mover', { dir: 'W' })] }),
+          mk('soltar', { dir: 'W' }),
+          mk('repetir', { n: 2, body: [mk('mover', { dir: 'E' })] }),
           mk('mover', { dir: 'N' }),
         ],
       }),

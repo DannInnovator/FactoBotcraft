@@ -1,22 +1,33 @@
 // Simulación determinista por ticks: máquina virtual de los bots, acciones,
 // fusiones, Glitchlings, lava, señales y el Capataz controlado a mano.
 import {
+  CHEST_CAP,
+  CRUCIBLE_CAP,
+  CRUCIBLE_TICKS,
   DAY_TICKS,
+  ELECTRIC_LVL,
+  ENERGY_COST,
   FINALE_REQ,
+  FORGE_CAP,
+  FORGE_TICKS,
   LAYERS,
   MAX_ITEM_LVL,
   NIGHT_START,
+  RECIPES,
   RESTORE_COST,
+  TURBINE_OUTPUT,
+  energyValue,
   itemValue,
   recipeFor,
 } from './content';
 import { cloneExact, findBlock, mk, sameProgram } from './program';
 import { hash } from './rng';
-import { DELTA, DIRS, type Action, type Block, type Bot, type Cond, type Dir, type Frame, type Item, type Layer, type SimEvent, type Tile, type World } from './types';
+import { DELTA, DIRS, INTERACTIVE, type Action, type Block, type Bot, type Cond, type Dir, type Frame, type Item, type Layer, type SimEvent, type Tile, type World } from './types';
 import { isWalkable, tileAt } from './world';
 
 export interface TickOpts {
   offline?: boolean;
+  layer?: Layer; // capa en curso: de su red eléctrica se alimentan los bots de nivel 3+
 }
 
 const ROT: Record<Dir, Dir> = { N: 'E', E: 'S', S: 'W', W: 'N' };
@@ -30,7 +41,7 @@ export function isNight(world: World): boolean {
 }
 
 export function isLavaHot(world: World, t: Tile): boolean {
-  if (t.t !== 'lava') return false;
+  if (t.t !== 'lava' && t.t !== 'turbine') return false;
   return Math.floor((world.tick + (t.phase ?? 0)) / 40) % 2 === 0;
 }
 
@@ -52,7 +63,7 @@ function staticLight(l: Layer): Uint8Array {
     for (let x = 0; x < l.w; x++) {
       const t = l.tiles[y * l.w + x];
       if (t.lamp) glow(x, y, 3);
-      if (t.t === 'lava' || t.t === 'forge' || t.t === 'core') glow(x, y, 1);
+      if (t.t === 'lava' || t.t === 'forge' || t.t === 'core' || t.t === 'crucible' || t.t === 'dynamo' || t.t === 'turbine') glow(x, y, 1);
     }
   glow(l.elevator[0], l.elevator[1], 2);
   litCache.set(l, { v: l.version, lit });
@@ -128,6 +139,53 @@ export function pathStep(l: Layer, sx: number, sy: number, goal: (x: number, y: 
   return null;
 }
 
+/** Casilla objetivo de una interacción: la propia (sin dirección) o la vecina. */
+function targetOf(l: Layer, bot: Bot, side?: Dir): { t: Tile | null; x: number; y: number } {
+  if (!side) return { t: tileAt(l, bot.x, bot.y), x: bot.x, y: bot.y };
+  const d = realDir(l, side);
+  const x = bot.x + DELTA[d][0];
+  const y = bot.y + DELTA[d][1];
+  return { t: tileAt(l, x, y), x, y };
+}
+
+const same = (a: Item, b: Item) => a.kind === b.kind && a.lvl === b.lvl;
+
+function hasPair(store: Item[]): boolean {
+  return store.some((a, i) => store.some((b, j) => j !== i && same(a, b)));
+}
+
+const PRODUCTS = new Set(RECIPES.map((r) => r.out));
+
+/** Qué mineral saca un bot de un cofre o máquina. */
+function chooseFromStore(t: Tile, onTile: Item | null | undefined): number {
+  const st = t.store ?? [];
+  if (!st.length) return -1;
+  if (t.t === 'forge') {
+    const p = st.findIndex((it) => PRODUCTS.has(it.kind));
+    return p >= 0 ? p : 0;
+  }
+  if (t.t === 'crucible') {
+    // Lo terminado: el de mayor nivel que ya no tiene pareja dentro
+    let best = -1;
+    st.forEach((it, i) => {
+      const paired = st.some((o, j) => j !== i && same(o, it));
+      if (!paired && (best < 0 || it.lvl > st[best].lvl)) best = i;
+    });
+    return best;
+  }
+  // Cofre: primero el igual al mineral sobre el que está el bot (para fusionarlo),
+  // luego uno que tenga pareja (el de menor nivel), y si no, el más antiguo.
+  if (onTile) {
+    const m = st.findIndex((it) => same(it, onTile));
+    if (m >= 0) return m;
+  }
+  let pair = -1;
+  st.forEach((it, i) => {
+    if (st.some((o, j) => j !== i && same(o, it)) && (pair < 0 || it.lvl < st[pair].lvl)) pair = i;
+  });
+  return pair >= 0 ? pair : 0;
+}
+
 // ---------- Condiciones ----------
 export function evalCond(world: World, l: Layer, bot: Bot, c: Cond): boolean {
   let r = false;
@@ -167,6 +225,20 @@ export function evalCond(world: World, l: Layer, bot: Bot, c: Cond): boolean {
     case 'senal':
       r = l.signals[c.color ?? 'rojo'] > 0;
       break;
+    case 'cofreVacio': {
+      const { t } = targetOf(l, bot, c.dir ?? 'E');
+      r = !!t && (t.store ? t.store.length === 0 : t.t === 'floor' || t.t === 'lava' ? !t.item : false);
+      break;
+    }
+    case 'parCofre': {
+      const { t } = targetOf(l, bot, c.dir ?? 'E');
+      const st = t?.store ?? [];
+      r = hasPair(st) || (!!bot.hand && st.some((it) => same(it, bot.hand!)));
+      break;
+    }
+    case 'carga':
+      r = l.energy >= (c.n ?? 10);
+      break;
   }
   void world;
   return c.not ? !r : r;
@@ -175,7 +247,21 @@ export function evalCond(world: World, l: Layer, bot: Bot, c: Cond): boolean {
 // ---------- Acciones atómicas ----------
 type StartResult = { r: 'started' } | { r: 'done' } | { r: 'doneStarted' } | { r: 'wait' } | { r: 'hold' } | { r: 'fail'; msg: string } | { r: 'reset' };
 
-function begin(bot: Bot, a: Action): StartResult {
+function begin(bot: Bot, a: Action, opts?: TickOpts): StartResult {
+  // Bots de nivel 3+: motor eléctrico. Sin carga en la red trabajan a mitad de velocidad.
+  const l = opts?.layer;
+  if (l && !bot.captain && bot.lvl >= ELECTRIC_LVL) {
+    const cost = ENERGY_COST[a.kind];
+    if (cost > 0) {
+      if (l.energy >= cost) {
+        l.energy -= cost;
+        bot.lowPower = false;
+      } else {
+        bot.lowPower = true;
+        a.total *= 2;
+      }
+    }
+  }
   bot.action = a;
   bot.busy = a.total;
   return { r: 'started' };
@@ -187,12 +273,29 @@ function tryMove(l: Layer, bot: Bot, d: Dir, opts: TickOpts, repeat = false): St
   const y = bot.y + DELTA[rd][1];
   const t = tileAt(l, x, y);
   bot.facing = rd;
-  if (!isWalkable(t)) return { r: 'fail', msg: `choca contra ${t?.t === 'vein' ? 'una veta' : 'la roca'} (${arrowName(d)})` };
-  if (occupied(l, x, y, bot)) return { r: 'wait' };
+  if (!isWalkable(t)) return { r: 'fail', msg: `choca contra ${t?.t === 'vein' ? 'una veta' : t && INTERACTIVE.includes(t.t) ? 'una máquina' : 'la roca'} (${arrowName(d)})` };
+  if (occupied(l, x, y, bot)) {
+    // Cruce: si el otro bot quiere entrar justo en mi casilla, nos intercambiamos
+    const other = l.bots.find((b) => b !== bot && b.x === x && b.y === y);
+    const mine = bot.y * l.w + bot.x;
+    if (other && !other.captain && !bot.captain && other.busy === 0 && other.wantMove === mine && !other.paused) {
+      const back = (Object.keys(DELTA) as Dir[]).find((k) => DELTA[k][0] === -DELTA[rd][0] && DELTA[k][1] === -DELTA[rd][1])!;
+      other.x = bot.x;
+      other.y = bot.y;
+      other.facing = back;
+      other.wantMove = undefined;
+      other.swapped = true;
+      begin(other, { kind: 'move', total: dur(other, 4, opts), dir: back, fromX: x, fromY: y }, opts);
+    } else {
+      bot.wantMove = y * l.w + x;
+      return { r: 'wait' };
+    }
+  }
+  bot.wantMove = undefined;
   const a: Action = { kind: 'move', total: dur(bot, 4, opts), dir: rd, fromX: bot.x, fromY: bot.y, repeat };
   bot.x = x;
   bot.y = y;
-  return begin(bot, a);
+  return begin(bot, a, opts);
 }
 
 function arrowName(d: Dir): string {
@@ -212,48 +315,89 @@ function tryPick(world: World, l: Layer, bot: Bot, d: Dir, opts: TickOpts): Star
     if (bot.hand) return { r: 'fail', msg: 'tiene la mano llena y no puede picar' };
     const dark = LAYERS[l.index].dark && !isLit(l, bot.x, bot.y) ? 2 : 1;
     t.cd = world.flags.slowVeins ? 90 : 45;
-    return begin(bot, { kind: 'mine', total: dur(bot, 8 * miner * dark * (bot.captain ? 0.6 : 1), opts), dir: rd });
+    return begin(bot, { kind: 'mine', total: dur(bot, 8 * miner * dark * (bot.captain ? 0.6 : 1), opts), dir: rd }, opts);
   }
   if (t.t === 'wall' || t.t === 'capsule') {
-    return begin(bot, { kind: 'dig', total: dur(bot, (t.hard ?? 16) * miner * (bot.captain ? 0.5 : 1), opts), dir: rd });
+    return begin(bot, { kind: 'dig', total: dur(bot, (t.hard ?? 16) * miner * (bot.captain ? 0.5 : 1), opts), dir: rd }, opts);
   }
   if (t.t === 'bedrock') return { r: 'fail', msg: 'la roca madre es indestructible' };
   return { r: 'fail', msg: 'no hay nada que picar ahí' };
 }
 
-function doPickUp(l: Layer, bot: Bot, opts: TickOpts): StartResult {
-  const t = tileAt(l, bot.x, bot.y)!;
+function doPickUp(l: Layer, bot: Bot, opts: TickOpts, side?: Dir): StartResult {
+  const { t } = targetOf(l, bot, side);
+  if (side) bot.facing = realDir(l, side);
   if (bot.hand) return { r: 'fail', msg: 'ya tiene la mano llena' };
-  if (!t.item) return { r: 'fail', msg: 'no hay mineral que recoger aquí' };
+  if (!t) return { r: 'fail', msg: 'no hay nada que recoger ahí' };
+  if (t.store) {
+    const i = chooseFromStore(t, tileAt(l, bot.x, bot.y)?.item);
+    if (i < 0) return { r: 'fail', msg: t.t === 'crucible' ? 'el crisol aún no tiene nada terminado' : t.t === 'chest' ? 'el cofre está vacío' : 'la máquina está vacía' };
+    bot.hand = t.store.splice(i, 1)[0];
+    return begin(bot, { kind: 'pick', total: dur(bot, 2, opts) }, opts);
+  }
+  if (!t.item) return { r: 'fail', msg: side ? 'no hay mineral en esa casilla' : 'no hay mineral que recoger aquí' };
   bot.hand = t.item;
   t.item = null;
-  return begin(bot, { kind: 'pick', total: dur(bot, 2, opts) });
+  return begin(bot, { kind: 'pick', total: dur(bot, 2, opts) }, opts);
 }
 
-function doDrop(world: World, l: Layer, bot: Bot, ev: SimEvent[], opts: TickOpts): StartResult {
-  const t = tileAt(l, bot.x, bot.y)!;
+function sell(world: World, l: Layer, bot: Bot, it: Item, x: number, y: number, isCore: boolean, ev: SimEvent[]): void {
+  let value = itemValue(it);
+  if (bot.traits.includes('coleccionista')) value = Math.round(value * 1.25);
+  world.lumen += value;
+  world.stats.totalLumen += value;
+  world.stats.sold++;
+  bot.stats.sold++;
+  bot.stats.earned += value;
+  world.delivered[it.kind] = Math.max(world.delivered[it.kind] ?? 0, it.lvl);
+  ev.push({ e: 'sell', layer: l.index, x, y, item: it, value, botId: bot.id });
+  if (isCore && it.kind === FINALE_REQ.kind && it.lvl >= FINALE_REQ.lvl) ev.push({ e: 'core', item: it, botId: bot.id });
+}
+
+function doDrop(world: World, l: Layer, bot: Bot, ev: SimEvent[], opts: TickOpts, side?: Dir): StartResult {
+  const { t, x, y } = targetOf(l, bot, side);
+  if (side) bot.facing = realDir(l, side);
   const it = bot.hand;
   if (!it) return { r: 'fail', msg: 'no lleva nada en la mano' };
-  if (t.t === 'elevator' || t.t === 'core') {
-    let value = itemValue(it);
-    if (bot.traits.includes('coleccionista')) value = Math.round(value * 1.25);
-    world.lumen += value;
-    world.stats.totalLumen += value;
-    world.stats.sold++;
-    bot.stats.sold++;
-    bot.stats.earned += value;
-    world.delivered[it.kind] = Math.max(world.delivered[it.kind] ?? 0, it.lvl);
-    bot.hand = null;
-    ev.push({ e: 'sell', layer: l.index, x: bot.x, y: bot.y, item: it, value, botId: bot.id });
-    if (t.t === 'core' && it.kind === FINALE_REQ.kind && it.lvl >= FINALE_REQ.lvl) ev.push({ e: 'core', item: it, botId: bot.id });
-    return begin(bot, { kind: 'drop', total: dur(bot, 2, opts) });
+  if (!t) return { r: 'fail', msg: 'no puede soltar ahí' };
+  const drop = (ticks: number) => begin(bot, { kind: 'drop', total: dur(bot, ticks, opts) }, opts);
+  switch (t.t) {
+    case 'elevator':
+    case 'core':
+      bot.hand = null;
+      sell(world, l, bot, it, x, y, t.t === 'core', ev);
+      return drop(2);
+    case 'chest':
+    case 'crucible':
+    case 'forge': {
+      const cap = t.t === 'chest' ? CHEST_CAP : t.t === 'crucible' ? CRUCIBLE_CAP : FORGE_CAP;
+      t.store = t.store ?? [];
+      if (t.store.length >= cap) return { r: 'fail', msg: t.t === 'chest' ? 'el cofre está lleno' : 'la máquina está llena' };
+      t.store.push(it);
+      bot.hand = null;
+      return drop(2);
+    }
+    case 'dynamo': {
+      if (l.energy >= l.energyCap) return { r: 'fail', msg: 'la red eléctrica está llena (añade acumuladores o gasta carga)' };
+      const e = energyValue(it);
+      l.energy = Math.min(l.energyCap, l.energy + e);
+      world.flags.energyTotal = Number(world.flags.energyTotal ?? 0) + e;
+      bot.hand = null;
+      ev.push({ e: 'power', layer: l.index, x, y, amount: e });
+      return drop(2);
+    }
+    case 'floor':
+    case 'lava':
+      break;
+    default:
+      return { r: 'fail', msg: 'no puede soltar un mineral contra la roca' };
   }
   if (!t.item) {
     t.item = it;
     bot.hand = null;
-    return begin(bot, { kind: 'drop', total: dur(bot, 2, opts) });
+    return drop(2);
   }
-  if (t.item.kind === it.kind && t.item.lvl === it.lvl) {
+  if (same(t.item, it)) {
     if (it.lvl >= MAX_ITEM_LVL) return { r: 'fail', msg: 'ese mineral ya está en su nivel máximo' };
     let lvl = it.lvl + 1;
     if (bot.traits.includes('meticuloso') && hash(world.tick, bot.id, 77) < 1 / 6) lvl = Math.min(MAX_ITEM_LVL, lvl + 1);
@@ -262,18 +406,8 @@ function doDrop(world: World, l: Layer, bot: Bot, ev: SimEvent[], opts: TickOpts
     bot.stats.merges++;
     world.stats.merges++;
     world.stats.maxLevel[it.kind] = Math.max(world.stats.maxLevel[it.kind] ?? 0, lvl);
-    ev.push({ e: 'merge', layer: l.index, x: bot.x, y: bot.y, item: t.item, botId: bot.id });
-    return begin(bot, { kind: 'drop', total: dur(bot, 3, opts) });
-  }
-  if (t.t === 'forge') {
-    const out = recipeFor(t.item, it);
-    if (out) {
-      t.item = out;
-      bot.hand = null;
-      world.stats.maxLevel[out.kind] = Math.max(world.stats.maxLevel[out.kind] ?? 0, out.lvl);
-      ev.push({ e: 'craft', layer: l.index, x: bot.x, y: bot.y, item: out, botId: bot.id });
-      return begin(bot, { kind: 'drop', total: dur(bot, 6, opts) });
-    }
+    ev.push({ e: 'merge', layer: l.index, x, y, item: t.item, botId: bot.id });
+    return drop(3);
   }
   return { r: 'fail', msg: `la casilla está ocupada por otro mineral distinto` };
 }
@@ -328,9 +462,9 @@ function startAtomic(world: World, l: Layer, bot: Bot, b: Block, ev: SimEvent[],
     case 'picar':
       return tryPick(world, l, bot, b.dir ?? 'E', opts);
     case 'recoger':
-      return doPickUp(l, bot, opts);
+      return doPickUp(l, bot, opts, b.dir);
     case 'soltar':
-      return doDrop(world, l, bot, ev, opts);
+      return doDrop(world, l, bot, ev, opts, b.dir);
     case 'esperar':
       return begin(bot, { kind: 'wait', total: Math.max(1, Math.min(600, b.n ?? 10)) });
     case 'avanzar': {
@@ -474,6 +608,15 @@ function runProgram(world: World, l: Layer, bot: Bot, ev: SimEvent[], opts: Tick
     }
     atomicSeen = true;
     bot.cur = b.id;
+    if (bot.swapped) {
+      // Otro bot nos cruzó: ya estamos en la casilla a la que íbamos
+      bot.swapped = false;
+      bot.waitTicks = 0;
+      if (b.op === 'mover') {
+        f.i++;
+        continue;
+      }
+    }
     const res = startAtomic(world, l, bot, b, ev, opts);
     switch (res.r) {
       case 'started':
@@ -641,12 +784,86 @@ function stepGlitches(world: World, l: Layer, ev: SimEvent[]): void {
   }
 }
 
+// ---------- Máquinas ----------
+const machineCache = new WeakMap<Layer, { v: number; idx: number[] }>();
+
+function machinesOf(l: Layer): number[] {
+  const c = machineCache.get(l);
+  if (c && c.v === l.version) return c.idx;
+  const idx: number[] = [];
+  l.tiles.forEach((t, i) => {
+    if (t.t === 'crucible' || t.t === 'forge' || t.t === 'turbine') idx.push(i);
+  });
+  machineCache.set(l, { v: l.version, idx });
+  return idx;
+}
+
+function stepMachines(world: World, l: Layer, ev: SimEvent[]): void {
+  for (const i of machinesOf(l)) {
+    const t = l.tiles[i];
+    const x = i % l.w;
+    const y = Math.floor(i / l.w);
+    if (t.t === 'turbine') {
+      if (Math.floor((world.tick + (t.phase ?? 0)) / 40) % 2 === 0 && l.energy < l.energyCap) {
+        l.energy = Math.min(l.energyCap, l.energy + TURBINE_OUTPUT);
+        world.flags.energyTotal = Number(world.flags.energyTotal ?? 0) + TURBINE_OUTPUT;
+      }
+      continue;
+    }
+    if ((t.timer ?? 0) > 0) {
+      t.timer!--;
+      continue;
+    }
+    const st = t.store ?? [];
+    if (st.length < 2) continue;
+    if (t.t === 'crucible') {
+      // Fusiona la pareja de menor nivel, si hay carga suficiente
+      let a = -1;
+      let b = -1;
+      for (let p = 0; p < st.length; p++)
+        for (let q = p + 1; q < st.length; q++)
+          if (same(st[p], st[q]) && st[p].lvl < MAX_ITEM_LVL && (a < 0 || st[p].lvl < st[a].lvl)) {
+            a = p;
+            b = q;
+          }
+      if (a < 0) continue;
+      const cost = 2 * st[a].lvl;
+      if (l.energy < cost) continue;
+      l.energy -= cost;
+      const out: Item = { kind: st[a].kind, lvl: st[a].lvl + 1 };
+      st.splice(b, 1);
+      st.splice(a, 1, out);
+      t.timer = CRUCIBLE_TICKS;
+      world.stats.merges++;
+      world.flags.crucibleMerges = Number(world.flags.crucibleMerges ?? 0) + 1;
+      world.stats.maxLevel[out.kind] = Math.max(world.stats.maxLevel[out.kind] ?? 0, out.lvl);
+      ev.push({ e: 'machine', layer: l.index, x, y, item: out, kind: 'crucible' });
+    } else if (t.t === 'forge') {
+      let found: { a: number; b: number; out: Item } | null = null;
+      for (let p = 0; p < st.length && !found; p++)
+        for (let q = p + 1; q < st.length && !found; q++) {
+          const out = recipeFor(st[p], st[q]);
+          if (out) found = { a: p, b: q, out };
+        }
+      if (!found || l.energy < 4) continue;
+      l.energy -= 4;
+      st.splice(found.b, 1);
+      st.splice(found.a, 1, found.out);
+      t.timer = FORGE_TICKS;
+      world.stats.maxLevel[found.out.kind] = Math.max(world.stats.maxLevel[found.out.kind] ?? 0, found.out.lvl);
+      ev.push({ e: 'machine', layer: l.index, x, y, item: found.out, kind: 'forge' });
+    }
+  }
+}
+
 // ---------- Tick global ----------
 export function tick(world: World, ev: SimEvent[], opts: TickOpts = {}): void {
   world.tick++;
   for (const l of world.layers) {
     for (const t of l.tiles) if (t.t === 'vein' && (t.cd ?? 0) > 0) t.cd!--;
-    for (const b of l.bots) stepBot(world, l, b, ev, opts);
+    const lo: TickOpts = { ...opts, layer: l };
+    for (const b of l.bots) stepBot(world, l, b, ev, lo);
+    stepMachines(world, l, ev);
     if (!opts.offline) stepGlitches(world, l, ev);
   }
   if (world.tick % 600 === 0) {
@@ -691,13 +908,20 @@ export function captainUse(world: World, ev: SimEvent[]): CaptainResult {
   const l = world.layers[world.current];
   const cap = l.bots.find((b) => b.captain)!;
   if (cap.busy > 0) return { block: null };
+  // Si mira a un montacargas, cofre o máquina, interactúa con él; si no, con su casilla
+  const front = tileAt(l, cap.x + DELTA[cap.facing][0], cap.y + DELTA[cap.facing][1]);
+  let side: Dir | undefined;
+  if (front && INTERACTIVE.includes(front.t)) {
+    side = cap.facing;
+    if (LAYERS[l.index].gravity) side = (Object.keys(ROT) as Dir[]).find((k) => ROT[k] === cap.facing)!;
+  }
   if (cap.hand) {
-    const r = doDrop(world, l, cap, ev, {});
-    if (r.r === 'started') return { block: mk('soltar') };
+    const r = doDrop(world, l, cap, ev, {}, side);
+    if (r.r === 'started') return { block: mk('soltar', side ? { dir: side } : {}) };
     return { block: null, msg: r.r === 'fail' ? r.msg : undefined };
   }
-  const r = doPickUp(l, cap, {});
-  if (r.r === 'started') return { block: mk('recoger') };
+  const r = doPickUp(l, cap, {}, side);
+  if (r.r === 'started') return { block: mk('recoger', side ? { dir: side } : {}) };
   return { block: null, msg: r.r === 'fail' ? r.msg : undefined };
 }
 

@@ -1,7 +1,9 @@
 // Comandos del jugador: economía, construcción, taller, linaje, capas y biblioteca.
 import { OLD_BOTS, loreRoutines } from '../content/lore';
 import {
-  FORGE_COST,
+  BASE_ENERGY_CAP,
+  BATTERY_CAP,
+  BUILDINGS,
   FUSIONS,
   LAMP_COST,
   LAYERS,
@@ -10,9 +12,9 @@ import {
   botCost,
   memoryFor,
 } from './content';
-import { cloneExact, cloneFresh, countBlocks, sameProgram } from './program';
+import { cloneExact, cloneFresh, extractFunction, memoryUse, sameProgram } from './program';
 import { hash } from './rng';
-import type { Block, Bot, Layer, Routine, TraitId, World } from './types';
+import type { Block, Bot, Building, Layer, Routine, Tile, TraitId, World } from './types';
 import { generateLayer, isWalkable, makeBot, setProgram, tileAt } from './world';
 
 export type CmdResult = { ok: true; msg?: string } | { ok: false; msg: string };
@@ -65,19 +67,6 @@ export function placeLamp(world: World, x: number, y: number): CmdResult {
   world.lumen -= LAMP_COST;
   t.lamp = true;
   if (t.t === 'wall') t.hard = (t.hard ?? 16) * 3; // la pared queda reforzada
-  l.version++;
-  return { ok: true };
-}
-
-export function placeForge(world: World, x: number, y: number): CmdResult {
-  const l = layerOf(world);
-  const t = tileAt(l, x, y);
-  if (world.current < 1) return fail('La forja se desbloquea en la Veta de Hierro.');
-  if (!t || t.t !== 'floor') return fail('La forja va sobre suelo libre.');
-  if (t.item) return fail('Retira primero el mineral de esa casilla.');
-  if (world.lumen < FORGE_COST) return fail(`Una forja cuesta ${FORGE_COST} ✦.`);
-  world.lumen -= FORGE_COST;
-  l.tiles[y * l.w + x] = { t: 'forge', item: null };
   l.version++;
   return { ok: true };
 }
@@ -260,10 +249,9 @@ export function relocateBot(world: World, botId: number, x: number, y: number): 
 
 export function loadProgram(world: World, bot: Bot, blocks: Block[]): CmdResult {
   const mem = memoryFor(bot.lvl, bot.traits);
-  const n = countBlocks(blocks);
-  if (n > mem) return fail(`${bot.name} solo tiene memoria para ${mem} bloques (el programa usa ${n}).`);
+  const n = memoryUse(blocks, world.library);
+  if (n > mem) return fail(`${bot.name} solo tiene memoria para ${mem} bloques (el programa usa ${n}, contando sus funciones).`);
   setProgram(bot, blocks);
-  void world;
   return { ok: true };
 }
 
@@ -288,4 +276,66 @@ export function saveRoutine(world: World, name: string, blocks: Block[], author 
   };
   world.library.push(r);
   return r;
+}
+
+/** Encapsula varios bloques seguidos en una función de la Biblioteca. */
+export function makeFunction(world: World, list: Block[], from: number, to: number, name: string): Routine | null {
+  if (!world.unlockedOps.includes('llamar')) return null;
+  const r: Routine = {
+    id: `r${world.nextId++}`,
+    name: name.slice(0, 32) || 'función',
+    author: 'Tú',
+    blocks: [],
+    created: Date.now(),
+    uses: 1,
+    fn: true,
+  };
+  r.blocks = extractFunction(list, from, to, r.id);
+  world.library.push(r);
+  return r;
+}
+
+// ---------- Edificios ----------
+export function placeBuilding(world: World, b: Building, x: number, y: number): CmdResult {
+  const l = layerOf(world);
+  const def = BUILDINGS[b];
+  const t = tileAt(l, x, y);
+  if (!world.buildings.includes(b)) return fail(`${def.name}: todavía no está desbloqueado. ${def.unlockHint}`);
+  if (world.lumen < def.cost) return fail(`${def.name} cuesta ${def.cost} ✦.`);
+  if (!t) return fail('Elige una casilla del mapa.');
+  if (b === 'turbina') {
+    if (t.t !== 'lava') return fail('La turbina se construye sobre una casilla de lava.');
+  } else if (t.t !== 'floor') return fail('Construye sobre una casilla de suelo excavado.');
+  if (t.item) return fail('Retira primero el mineral de esa casilla.');
+  if (l.bots.some((bb) => bb.x === x && bb.y === y)) return fail('Hay un bot en esa casilla.');
+  if (l.broken.some((bb) => !bb.repaired && bb.x === x && bb.y === y)) return fail('Hay un bot averiado en esa casilla.');
+  world.lumen -= def.cost;
+  const tile: Tile = { t: def.tile, item: null };
+  if (def.tile === 'chest' || def.tile === 'crucible' || def.tile === 'forge') tile.store = [];
+  if (def.tile === 'turbine') tile.phase = t.phase;
+  l.tiles[y * l.w + x] = tile;
+  if (b === 'acumulador') l.energyCap += BATTERY_CAP;
+  l.version++;
+  return { ok: true };
+}
+
+/** Desmonta un edificio y devuelve la mitad de su coste (el contenido se pierde). */
+export function removeBuilding(world: World, x: number, y: number): CmdResult {
+  const l = layerOf(world);
+  const t = tileAt(l, x, y);
+  const entry = (Object.entries(BUILDINGS) as [Building, (typeof BUILDINGS)[Building]][]).find(([, d]) => d.tile === t?.t);
+  if (!t || !entry) return fail('Ahí no hay ningún edificio.');
+  const [b, def] = entry;
+  world.lumen += Math.floor(def.cost / 2);
+  l.tiles[y * l.w + x] = b === 'turbina' ? { t: 'lava', item: null, phase: t.phase } : { t: 'floor', item: null };
+  if (b === 'acumulador') l.energyCap = Math.max(BASE_ENERGY_CAP, l.energyCap - BATTERY_CAP);
+  l.energy = Math.min(l.energy, l.energyCap);
+  l.version++;
+  return { ok: true };
+}
+
+export function unlockBuilding(world: World, b: Building): boolean {
+  if (world.buildings.includes(b)) return false;
+  world.buildings.push(b);
+  return true;
 }

@@ -4,17 +4,20 @@ import { ADA_TIPS, CODEX, DIARY, albaWindows, ALBA_WINDOWS } from './content/lor
 import { QUESTS, type Quest } from './content/quests';
 import { Renderer } from './render/renderer';
 import { challengeStep, type ChallengeDef } from './sim/challenge';
-import { DAY_TICKS, FORGE_COST, LAMP_COST, LAYERS, NIGHT_START, ORES, TICKS_PER_SEC, itemLabel, memoryFor } from './sim/content';
+import { BUILDINGS, DAY_TICKS, LAMP_COST, LAYERS, NIGHT_START, ORES, TICKS_PER_SEC, itemLabel, memoryFor } from './sim/content';
 import {
   buyBot,
   canDescend,
   ensureLoreLibrary,
   layerOf,
   loadProgram,
+  makeFunction,
   relocateBot,
   nextBotCost,
   placeBeacon,
-  placeForge,
+  placeBuilding,
+  removeBuilding,
+  unlockBuilding,
   placeLamp,
   saveRoutine,
 } from './sim/commands';
@@ -23,7 +26,7 @@ import { simulateOffline } from './sim/offline';
 import { cloneExact, cloneFresh, mk, walk } from './sim/program';
 import { loadLocal, saveLocal, getPref } from './sim/save';
 import { captainMove, captainUse, isLavaHot, isNight, restoreBot, tick } from './sim/sim';
-import { DELTA, type Block, type Bot, type Dir, type Layer, type Op, type SimEvent, type World } from './sim/types';
+import { DELTA, type Block, type Bot, type Building, type CondKind, type Dir, type Layer, type Op, type SimEvent, type World } from './sim/types';
 import { createWorld, isWalkable, makeBot as makeSimBot, setProgram, tileAt } from './sim/world';
 import { Modals, add, fmt, h } from './ui/dom';
 import { ProgramEditor } from './ui/editor';
@@ -31,7 +34,7 @@ import { EMBLEM, FAVICON, icon } from './ui/icons';
 import * as P from './ui/panels';
 import { Tutorial } from './ui/tutorial';
 
-export type Mode = 'normal' | 'bot' | 'lamp' | 'forge' | 'beacon' | 'merge' | 'relocate';
+export type Mode = 'normal' | 'bot' | 'lamp' | 'build' | 'remove' | 'beacon' | 'merge' | 'relocate';
 
 export class Game {
   world!: World;
@@ -45,6 +48,7 @@ export class Game {
   private last = performance.now();
   private keys = new Map<string, number>(); // tecla → momento en que se pulsó
   mode: Mode = 'normal';
+  buildKind: Building = 'cofre';
   beaconLetter = 'A';
   selected: number | null = null;
   mergeFrom: number | null = null;
@@ -153,6 +157,7 @@ export class Game {
 
   private begin(): void {
     this.started = true;
+    this.syncUnlocks();
     this.buildHud();
     this.activateQuest(true);
   }
@@ -244,8 +249,29 @@ export class Game {
     const next = QUESTS.find((q) => !this.world.quests.done.includes(q.id)) ?? null;
     const changed = this.world.quests.active !== (next?.id ?? null);
     this.world.quests.active = next?.id ?? null;
+    if (next) this.grant(next.unlock?.buildings, next.unlock?.conds, !initial);
     if (next && (changed || initial) && !(initial && this.world.quests.done.length > 0) && !this.tutorial.active) this.say(next.ada);
     this.renderOrders();
+  }
+
+  /** Concede edificios y condiciones nuevos, avisando al jugador. */
+  private grant(buildings: Building[] = [], conds: CondKind[] = [], announce = true): void {
+    for (const c of conds) if (!this.world.unlockedConds.includes(c)) this.world.unlockedConds.push(c);
+    for (const b of buildings) {
+      if (unlockBuilding(this.world, b)) {
+        this.world.flags.newBuild = 1;
+        if (announce) this.toast(`Nuevo edificio disponible: ${BUILDINGS[b].name}. Búscalo en «Construir».`, 'good', () => P.buildModal(this));
+      }
+    }
+    if (buildings.length) this.renderToolbar();
+  }
+
+  /** Partidas guardadas antes de un desbloqueo: recibe lo que ya le corresponde. */
+  private syncUnlocks(): void {
+    for (const q of QUESTS) {
+      const done = this.world.quests.done.includes(q.id);
+      if (done) this.grant([...(q.unlock?.buildings ?? []), ...(q.reward?.buildings ?? [])], [...(q.unlock?.conds ?? []), ...(q.reward?.conds ?? [])], false);
+    }
   }
 
   private checkQuests(): void {
@@ -256,6 +282,7 @@ export class Game {
     if (r?.lumen) this.world.lumen += r.lumen;
     if (r?.frags) this.world.fragments += r.frags;
     for (const op of r?.ops ?? []) if (!this.world.unlockedOps.includes(op as Op)) this.world.unlockedOps.push(op as Op);
+    this.grant(r?.buildings, r?.conds, true);
     this.audio.fanfare();
     this.toast(`✔ Orden completada: ${q.title}${r?.lumen ? ` (+${r.lumen} ✦)` : ''}${r?.frags ? ` (+${r.frags} ◆)` : ''}`, 'good');
     if (q.id === 'q-bot') this.celebrateIgnition();
@@ -290,6 +317,8 @@ export class Game {
     unlock('glitchlings', w.layers.some((l) => l.glitches.length > 0) || w.stats.glitchesCaught > 0);
     unlock('lava', w.layers.length >= 4);
     unlock('vacio', w.layers.length >= 5);
+    unlock('red', w.buildings.includes('dinamo'));
+    unlock('crisol', w.buildings.includes('crisol'));
   }
 
   // ---------- Eventos de la simulación ----------
@@ -819,10 +848,19 @@ export class Game {
         this.renderer.sparkle(x, y, 0xffc46b);
         return;
       }
-      case 'forge': {
-        const r = placeForge(w, x, y);
+      case 'build': {
+        const r = placeBuilding(w, this.buildKind, x, y);
         if (!r.ok) return this.toast(r.msg, 'bad');
-        this.renderer.burst(x, y, 0xff7a2a, 24);
+        this.renderer.burst(x, y, 0xffb85c, 24);
+        this.audio.dig();
+        this.world.flags[`built_${this.buildKind}`] = Number(this.world.flags[`built_${this.buildKind}`] ?? 0) + 1;
+        this.setMode('normal');
+        return;
+      }
+      case 'remove': {
+        const r = removeBuilding(w, x, y);
+        if (!r.ok) return this.toast(r.msg, 'bad');
+        this.renderer.burst(x, y, 0x8a7060, 20);
         this.audio.dig();
         this.setMode('normal');
         return;
@@ -856,6 +894,8 @@ export class Game {
     }
     const bot = l.bots.find((b) => b.x === x && b.y === y);
     if (bot) return this.selectBot(bot.id);
+    const tt = tileAt(l, x, y);
+    if (tt && (tt.store || tt.t === 'dynamo' || tt.t === 'battery' || tt.t === 'turbine')) return P.machineModal(this, x, y);
     const bb = l.broken.find((b) => !b.repaired && b.x === x && b.y === y);
     if (bb) return P.repairModal(this, bb.key);
     this.selectBot(null);
@@ -923,8 +963,10 @@ export class Game {
         return isWalkable(t) && !l.bots.some((b) => b.x === x && b.y === y) && this.world.lumen >= nextBotCost(this.world);
       case 'lamp':
         return (t.t === 'wall' || t.t === 'vein' || t.t === 'bedrock') && !t.lamp && this.world.lumen >= LAMP_COST;
-      case 'forge':
-        return t.t === 'floor' && !t.item && this.world.lumen >= FORGE_COST;
+      case 'build':
+        return (this.buildKind === 'turbina' ? t.t === 'lava' : t.t === 'floor') && !t.item && !l.bots.some((b) => b.x === x && b.y === y) && this.world.lumen >= BUILDINGS[this.buildKind].cost;
+      case 'remove':
+        return Object.values(BUILDINGS).some((d) => d.tile === t.t);
       case 'beacon':
         return isWalkable(t);
       case 'relocate':
@@ -939,7 +981,8 @@ export class Game {
     const texts: Partial<Record<Mode, string>> = {
       bot: `Elige una casilla de suelo para ensamblar el bot (${nextBotCost(this.world)} ✦). Esc para cancelar.`,
       lamp: `Elige una pared junto a un pasillo para colgar la lámpara (${LAMP_COST} ✦). Puedes colgar varias. Esc para terminar.`,
-      forge: `Elige una casilla de suelo libre para la forja (${FORGE_COST} ✦).`,
+      build: `Elige una casilla ${this.buildKind === 'turbina' ? 'de lava' : 'de suelo libre'} para: ${BUILDINGS[this.buildKind].name} (${BUILDINGS[this.buildKind].cost} ✦). Esc para cancelar.`,
+      remove: 'Elige el edificio que quieres desmontar (recuperas la mitad de su coste; su contenido se pierde). Esc para cancelar.',
       beacon: `Elige dónde clavar la baliza ${this.beaconLetter}.`,
       merge: 'Elige el segundo bot (del mismo nivel) para fusionarlos.',
       relocate: 'Elige la casilla de suelo libre donde quieres dejar el bot. Empezará su programa desde el principio. Esc para cancelar.',
@@ -1077,6 +1120,11 @@ export class Game {
         if (ap) ap.classList.add('primary');
       },
       click: () => this.audio.click(),
+      makeFunction: (list, from, to, name) => {
+        const r = makeFunction(this.world, list, from, to, name);
+        if (r) this.toast(`Función «${r.name}» creada y guardada en la Biblioteca. Pulsa Aplicar para cargarla en el bot.`, 'good');
+        return r;
+      },
     });
     this.editor = ed;
     this.editorBot = bot.id;
@@ -1102,6 +1150,7 @@ export class Game {
       g('lumen', 'Lumen', 'lumen', false, 'lumen'),
       g('frag', 'Estática', 'frags', false, 'fragment'),
       g('alba', 'Ventanas de Alba', 'alba', true, 'alba'),
+      g('energy', 'Carga', 'energy', true, 'energy'),
       (this.el.layerBox = h(
         'div',
         { class: 'layerbox plate', role: 'button', tabindex: '0', title: 'Capas de Konstrukta', onclick: () => P.layersModal(this) },
@@ -1144,7 +1193,7 @@ export class Game {
     if (!tb) return;
     const w = this.world;
     // Solo se reconstruye si cambia algo visible (costes, modo, desbloqueos)
-    const sig = [this.mode, !!this.recording, nextBotCost(w), w.layers.length, w.unlockedOps.includes('irA'), canDescend(w).ok].join('|');
+    const sig = [this.mode, !!this.recording, nextBotCost(w), w.layers.length, w.buildings.length, !!w.flags.newBuild, canDescend(w).ok].join('|');
     if (sig === this.toolbarSig && tb.childElementCount) return;
     this.toolbarSig = sig;
     tb.innerHTML = '';
@@ -1161,8 +1210,7 @@ export class Game {
     tool(this.recording ? 'stop' : 'rec', this.recording ? 'Detener' : 'Grabar', 'R', !!this.recording, () => this.toggleRecord(), 'rec');
     tool('bot', 'Bot', `${fmt(nextBotCost(w))} ✦`, this.mode === 'bot', () => this.setMode(this.mode === 'bot' ? 'normal' : 'bot'));
     tool('lamp', 'Lámpara', `${LAMP_COST} ✦`, this.mode === 'lamp', () => this.setMode(this.mode === 'lamp' ? 'normal' : 'lamp'));
-    if (w.layers.length >= 2) tool('forge', 'Forja', `${FORGE_COST} ✦`, this.mode === 'forge', () => this.setMode(this.mode === 'forge' ? 'normal' : 'forge'));
-    if (w.unlockedOps.includes('irA')) tool('beacon', 'Baliza', null, this.mode === 'beacon', () => P.beaconPicker(this));
+    tool('build', 'Construir', w.buildings.length ? `${w.buildings.length} edif.` : null, this.mode === 'build' || this.mode === 'remove', () => P.buildModal(this), w.flags.newBuild ? 'ready' : '');
     tool('workshop', 'Taller', null, false, () => P.workshopModal(this));
     tool('library', 'Biblioteca', null, false, () => P.libraryModal(this));
     tool('codex', 'Códex', null, false, () => P.codexModal(this, 'codex'));
@@ -1208,6 +1256,13 @@ export class Game {
     this.el.dial.style.setProperty('--night', `${(NIGHT_START / DAY_TICKS) * 100}%`);
     this.el.dial.style.background = `conic-gradient(#6a4a2a 0 ${(NIGHT_START / DAY_TICKS) * 100}%, #2a3c6a 0 100%)`;
     this.el.clockTxt.textContent = isNight(w) ? 'Noche' : 'Día';
+    const lay = this.layer();
+    const eg = this.el.energy?.parentElement;
+    if (eg) {
+      eg.hidden = !w.buildings.includes('dinamo');
+      this.el.energy.textContent = `${Math.floor(lay.energy)}/${lay.energyCap}`;
+      this.el.energyBar.style.width = `${(lay.energy / lay.energyCap) * 100}%`;
+    }
     if (force) {
       this.el.pause.replaceChildren(icon(this.paused ? 'play' : 'pause', 16));
       this.el.pause.classList.toggle('active', this.paused);

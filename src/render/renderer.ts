@@ -19,6 +19,11 @@ import {
   makeGem,
   botSig,
   makeGlitch,
+  makeChest,
+  makeCrucible,
+  makeDynamo,
+  makeBattery,
+  makeTurbine,
   makeLantern,
   setMood,
   std,
@@ -117,6 +122,8 @@ export class Renderer {
   private elevatorModel: THREE.Group | null = null;
   private coreModel: THREE.Group | null = null;
   private forgeModels: THREE.Group[] = [];
+  private machineModels: { g: THREE.Group; ti: number; kind: string }[] = [];
+  private storeMeshes = new Map<number, { key: string; g: THREE.Group }>();
   private selRing: THREE.Mesh;
   private hoverBox: THREE.Mesh;
   private dust: THREE.Points;
@@ -318,6 +325,9 @@ export class Renderer {
     });
     this.staticGroup.clear();
     this.forgeModels = [];
+    this.machineModels = [];
+    for (const [, m] of this.storeMeshes) this.dynGroup.remove(m.g);
+    this.storeMeshes.clear();
     const def = LAYERS[l.index];
     const pal = def.palette;
     this.scene.fog = new THREE.Fog(pal.fog, 18, 42);
@@ -330,8 +340,8 @@ export class Renderer {
     const lavaIdx: number[] = [];
     this.lampSpots = [];
     l.tiles.forEach((t, i) => {
-      if (t.t === 'floor' || t.t === 'elevator' || t.t === 'forge' || t.t === 'core') floorIdx.push(i);
-      else if (t.t === 'lava') lavaIdx.push(i);
+      if (t.t === 'floor' || t.t === 'elevator' || t.t === 'forge' || t.t === 'core' || t.t === 'chest' || t.t === 'crucible' || t.t === 'dynamo' || t.t === 'battery') floorIdx.push(i);
+      else if (t.t === 'lava' || t.t === 'turbine') lavaIdx.push(i);
       else wallIdx.push(i);
       if (t.t === 'vein') veinIdx.push(i);
     });
@@ -441,6 +451,13 @@ export class Renderer {
         f.position.set(x, 0, y);
         this.staticGroup.add(f);
         this.forgeModels.push(f);
+      }
+      const mk = { chest: makeChest, crucible: makeCrucible, dynamo: makeDynamo, battery: makeBattery, turbine: makeTurbine }[t.t as 'chest'];
+      if (mk) {
+        const m = mk();
+        m.position.set(x, 0, y);
+        this.staticGroup.add(m);
+        this.machineModels.push({ g: m, ti, kind: t.t });
       }
       if (t.beacon) {
         const b = makeBeacon(t.beacon);
@@ -627,7 +644,64 @@ export class Renderer {
     }
     for (const f of this.forgeModels) {
       const m = f.getObjectByName('mouth') as THREE.Mesh | undefined;
-      if (m) (m.material as THREE.MeshStandardMaterial).emissiveIntensity = 2.2 + Math.sin(t * 5) * 0.4;
+      if (m) (m.material as THREE.MeshStandardMaterial).emissiveIntensity = (l.energy >= 4 ? 2.2 : 0.4) + Math.sin(t * 5) * 0.4;
+    }
+    // Máquinas: animación según la red eléctrica
+    const charge = l.energyCap ? l.energy / l.energyCap : 0;
+    for (const { g, ti, kind } of this.machineModels) {
+      if (kind === 'dynamo') {
+        const d = g.getObjectByName('drum');
+        if (d) d.rotation.x = t * (charge > 0 ? 4 : 0.3);
+        const c = g.getObjectByName('coil') as THREE.Mesh | undefined;
+        if (c) (c.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.6 + charge * 2.5;
+      } else if (kind === 'battery') {
+        const f = g.getObjectByName('fill');
+        if (f) {
+          f.scale.y = Math.max(0.02, charge);
+          f.position.y = 0.1 + 0.4 * f.scale.y;
+        }
+      } else if (kind === 'turbine') {
+        const r = g.getObjectByName('rotor');
+        if (r && o.lavaHot(ti % l.w, Math.floor(ti / l.w))) r.rotation.y += dt * 6;
+      } else if (kind === 'crucible') {
+        const liq = g.getObjectByName('liquid') as THREE.Mesh | undefined;
+        if (liq) (liq.material as THREE.MeshStandardMaterial).emissiveIntensity = (l.tiles[ti].store?.length ? 1.6 : 0.3) + Math.sin(t * 3) * 0.3;
+      }
+    }
+    // Contenido visible de cofres y máquinas (hasta 6 gemas en corro)
+    const seenStores = new Set<number>();
+    l.tiles.forEach((tile, ti) => {
+      if (!tile.store) return;
+      seenStores.add(ti);
+      const shown = tile.store.slice(0, 6);
+      const key = shown.map((it) => `${it.kind}${it.lvl}`).join(',');
+      let e = this.storeMeshes.get(ti);
+      if (e && e.key !== key) {
+        this.dynGroup.remove(e.g);
+        e = undefined;
+      }
+      if (!e) {
+        const g = new THREE.Group();
+        shown.forEach((it, k) => {
+          const gem = makeGem(it);
+          const a = (k / Math.max(1, shown.length)) * Math.PI * 2;
+          const rr = shown.length > 1 ? 0.2 : 0;
+          gem.position.set(Math.cos(a) * rr, 0, Math.sin(a) * rr);
+          gem.scale.setScalar(0.7);
+          g.add(gem);
+        });
+        g.position.set(ti % l.w, tile.t === 'crucible' ? 0.75 : tile.t === 'forge' ? 0.62 : 0.95, Math.floor(ti / l.w));
+        this.dynGroup.add(g);
+        e = { key, g };
+        this.storeMeshes.set(ti, e);
+      }
+      e.g.rotation.y = t * 0.7;
+    });
+    for (const [ti, e] of this.storeMeshes) {
+      if (!seenStores.has(ti)) {
+        this.dynGroup.remove(e.g);
+        this.storeMeshes.delete(ti);
+      }
     }
 
     // Minerales en el suelo

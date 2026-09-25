@@ -1,5 +1,5 @@
 // Órdenes de trabajo: la columna vertebral del tutorial y de la historia.
-import type { World } from '../sim/types';
+import type { Building, CondKind, World } from '../sim/types';
 
 export interface Quest {
   id: string;
@@ -8,7 +8,9 @@ export interface Quest {
   hint?: string;
   ada: string; // lo que dice ADA al activarse
   done: (w: World) => boolean;
-  reward?: { lumen?: number; frags?: number; ops?: string[]; conds?: string[] };
+  reward?: { lumen?: number; frags?: number; ops?: string[]; conds?: CondKind[]; buildings?: Building[] };
+  /** Desbloqueos que se conceden al activarse la orden (para poder cumplirla). */
+  unlock?: { buildings?: Building[]; conds?: CondKind[] };
   onDone?: string; // lo que dice ADA al completarse
 }
 
@@ -45,9 +47,9 @@ export const QUESTS: Quest[] = [
   {
     id: 'q-vender',
     title: 'Una ventana en Alba',
-    desc: 'Suelta un mineral sobre el montacargas.',
-    hint: 'El montacargas es la plataforma iluminada del centro de la sala.',
-    ada: 'Ahora súbelo a la superficie: suelta el mineral sobre el montacargas.',
+    desc: 'Ponte junto al montacargas, camina hacia él y pulsa E para enviarle el mineral.',
+    hint: 'El montacargas es la plataforma con el anillo de luz. Se usa desde cualquiera de sus lados.',
+    ada: 'Ahora súbelo a la superficie. Acércate al montacargas, camina hacia él (te quedarás mirándolo) y pulsa E.',
     done: (w) => w.stats.sold >= 1,
     reward: { lumen: 10 },
     onDone: 'Arriba acaba de encenderse una ventana. La primera en once años. Guárdate ese Lumen (✦): lo vas a necesitar.',
@@ -90,6 +92,27 @@ export const QUESTS: Quest[] = [
     done: (w) => w.lumen >= 150,
   },
   {
+    id: 'q-dosbots',
+    title: 'Dos pares de manos',
+    desc: 'Ten dos bots trabajando a la vez.',
+    hint: 'Graba otra rutina en otra veta, o carga la misma en un segundo bot situado en otra veta.',
+    ada: 'Un bot solo es un ayudante. Dos ya son un equipo… y también un atasco en potencia. Pon dos bots a trabajar a la vez.',
+    done: (w) => w.layers.some((l) => l.bots.filter((b) => !b.captain && b.program.length && b.stats.mined + b.stats.sold + b.stats.merges > 0).length >= 2),
+    reward: { buildings: ['cofre'] },
+    onDone: '¿Ves cómo se estorban si comparten casillas? Te he desbloqueado el cofre: se usa desde sus cuatro lados y sirve de buzón entre bots. Lo encontrarás en «Construir».',
+  },
+  {
+    id: 'q-cofre',
+    title: 'El buzón del Gremio',
+    desc: 'Construye un cofre y llénalo con al menos 4 minerales.',
+    hint: 'Construir → Cofre. Luego, junto al cofre, usa «soltar» apuntando hacia él (o graba al Capataz mirándolo y pulsando E).',
+    ada: 'Truco del Gremio: los mineros sueltan en un cofre desde su lado y otro bot recoge desde el suyo. Nadie pisa la casilla de nadie. Además, «soltar» y «recoger» ahora aceptan una dirección.',
+    unlock: { buildings: ['cofre'], conds: ['cofreVacio', 'parCofre'] },
+    done: (w) => w.layers.some((l) => l.tiles.some((t) => t.t === 'chest' && (t.store?.length ?? 0) >= 4)),
+    reward: { lumen: 40 },
+    onDone: 'Al sacar de un cofre, un bot coge primero el mineral igual al que tiene a sus pies, y si no, uno que tenga pareja. Así un bot fusionador junto a un cofre trabaja casi solo.',
+  },
+  {
     id: 'q-taller',
     title: 'El Taller de Código',
     desc: 'Fusiona dos instrucciones en el Taller.',
@@ -118,11 +141,12 @@ export const QUESTS: Quest[] = [
   {
     id: 'q-forja',
     title: 'Hierro y carbón',
-    desc: 'Construye una forja y crea acero.',
-    hint: 'Deja hierro sobre la forja y suelta carbón encima (o al revés).',
-    ada: 'El hierro y el carbón no se funden por armonía, sino por calor. Construye una forja y crea acero.',
+    desc: 'Construye una forja y un dínamo, carga la red y crea acero.',
+    hint: 'Echa hierro y carbón en la forja (desde cualquier lado). Necesita 4 de carga por pieza: echa minerales en el dínamo.',
+    ada: 'El hierro y el carbón no se funden por armonía, sino por calor, y el calor necesita energía. Construye una forja y un dínamo: todo lo que eches al dínamo se convierte en carga (el carbón rinde cuatro veces más).',
+    unlock: { buildings: ['forja', 'dinamo'], conds: ['carga'] },
     done: (w) => (w.stats.maxLevel.acero ?? 0) >= 1,
-    onDone: 'Acero. El producto hereda el nivel más bajo de los dos, así que equilibra tus cadenas.',
+    onDone: 'Acero. El producto hereda el nivel más bajo de los dos, así que equilibra tus cadenas. Y recuerda: cada mineral que quemas en el dínamo es uno que no llega a Alba.',
   },
   {
     id: 'q-pala',
@@ -143,12 +167,34 @@ export const QUESTS: Quest[] = [
     reward: { frags: 1 },
   },
   {
+    id: 'q-motor',
+    title: 'Motores eléctricos',
+    desc: 'Ten un bot de nivel 3 y genera 200 de carga en total.',
+    hint: 'Fusiona dos bots de nivel 2. Los bots de nivel 3+ consumen carga: sin ella trabajan a mitad de velocidad.',
+    ada: 'A partir del nivel 3 los bots llevan motor eléctrico: son más rápidos, pero beben de la red de su capa. Si la red se vacía, trabajan a medio gas. Prepara una línea que alimente el dínamo.',
+    done: (w) => bots(w).some((b) => b.lvl >= 3) && f(w, 'energyTotal') >= 200,
+    reward: { buildings: ['crisol'] },
+    onDone: 'Ya tienes una red de verdad. Te desbloqueo el crisol de armonía: fusiona solo las parejas que le eches. Es lento y gasta carga… pero no se cansa nunca.',
+  },
+  {
+    id: 'q-crisol',
+    title: 'Armonía automática',
+    desc: 'Construye un crisol y deja que fusione por su cuenta.',
+    hint: 'Echa parejas iguales en el crisol. Saca el resultado con «recoger» hacia él: te da lo que ya no tiene pareja dentro.',
+    ada: 'El crisol hace sola la fusión que hasta ahora hacían tus bots. Un bot fusionador bien programado sigue siendo más rápido; tú eliges.',
+    unlock: { buildings: ['crisol'] },
+    done: (w) => f(w, 'crucibleMerges') >= 3,
+    reward: { frags: 1 },
+  },
+  {
     id: 'q-bajar3',
     title: 'Las Grutas de Cristal',
     desc: 'Desciende a la tercera capa.',
     hint: 'Necesitas acero nv4 enviado y 2.500 ✦.',
     ada: 'Las Grutas de Cristal están a oscuras. Allí abajo los Glitchlings campan a sus anchas. Lleva lámparas.',
     done: (w) => w.layers.length >= 3,
+    reward: { buildings: ['acumulador'] },
+    onDone: 'En las grutas vas a necesitar mucha carga. Te desbloqueo el acumulador: cada uno amplía la red de su capa.',
   },
   {
     id: 'q-luz',
@@ -176,12 +222,23 @@ export const QUESTS: Quest[] = [
     done: (w) => w.layers.some((l) => l.broken.some((b) => b.key === 'remache2' && b.repaired)),
   },
   {
+    id: 'q-funcion',
+    title: 'Encapsular',
+    desc: 'Crea una función y úsala en un bot.',
+    hint: 'Taller: repetir + repetir = «rutina». Luego, en el editor, pulsa ƒ en el primer y el último bloque que quieras encapsular.',
+    ada: 'Los ingenieros del Gremio no copiaban código: lo encapsulaban. Una función se guarda una vez en la Biblioteca y la usan todos los bots que quieras. Si la arreglas, se arregla en todos. Y en memoria solo cuenta una vez.',
+    done: (w) => w.library.some((r) => r.fn) && bots(w).some((b) => JSON.stringify(b.program).includes('"llamar"')),
+    reward: { frags: 2 },
+  },
+  {
     id: 'q-bajar4',
     title: 'La Forja de Magma',
     desc: 'Desciende a la cuarta capa.',
     hint: 'Necesitas cristal nv6 enviado y 20.000 ✦.',
     ada: 'La cuarta capa late. Literalmente: la lava se calienta y se enfría cada cuatro segundos. Cuenta, o lleva bots Refractarios.',
     done: (w) => w.layers.length >= 4,
+    reward: { buildings: ['turbina'] },
+    onDone: 'La lava late, y lo que late puede mover una turbina. Construye turbinas sobre la lava: generan carga solas, sin gastar minerales.',
   },
   {
     id: 'q-lumbre',
@@ -202,7 +259,7 @@ export const QUESTS: Quest[] = [
     id: 'q-nucleo',
     title: 'Enséñale',
     desc: 'Lleva una nucleita de nivel 6 al corazón del Núcleo.',
-    hint: 'Suéltala sobre el Núcleo, en el centro del Vacío. Mejor que la lleve un bot: el Núcleo aprende de quien se la entrega.',
+    hint: 'Suéltala hacia el Núcleo, en el centro del Vacío, desde una casilla vecina. Mejor que la lleve un bot: el Núcleo aprende de quien se la entrega.',
     ada: 'He leído la última página de Mireya. Ella tenía razón: no hay que combatirlo. Hay que enseñarle.',
     done: (w) => w.finished,
   },

@@ -1,6 +1,6 @@
 // Ganchos de depuración (solo en modo desarrollo).
 import type { Game } from './game';
-import { buyBot, descend, goToLayer, fuseInstruction, loadProgram } from './sim/commands';
+import { buyBot, descend, goToLayer, fuseInstruction, loadProgram, placeBuilding } from './sim/commands';
 import { cloneFresh } from './sim/program';
 import type { Block, Bot } from './sim/types';
 import { FUSIONS } from './sim/content';
@@ -14,6 +14,7 @@ export function install(game: Game): void {
   w.__fuseAll = () => FUSIONS.forEach((f) => fuseInstruction(game.world, f.id));
   w.__offline = (ms: number) => simulateOffline(game.world, ms);
   w.__P = P;
+  w.__place = (b: never, x: number, y: number) => placeBuilding(game.world, b, x, y);
   w.__buy = (x: number, y: number) => buyBot(game.world, x, y).bot;
   w.__load = (b: Bot, blocks: Block[]) => loadProgram(game.world, b, cloneFresh(blocks));
 }

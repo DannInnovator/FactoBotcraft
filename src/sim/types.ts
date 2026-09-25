@@ -29,10 +29,21 @@ export type TileType =
   | 'vein' // veta de mineral (sólida, se pica desde al lado)
   | 'capsule' // pared con cápsula de datos (lore)
   | 'floor'
-  | 'elevator' // montacargas: soltar aquí vende
-  | 'forge' // forja: combina minerales distintos
+  | 'elevator' // montacargas: se usa desde cualquier lado y vende
+  | 'forge' // forja: combina minerales distintos (máquina, gasta carga)
   | 'lava' // suelo que late: caliente / frío
-  | 'core'; // el Núcleo (capa 5)
+  | 'core' // el Núcleo (capa 5)
+  | 'chest' // cofre: almacén accesible desde los 4 lados
+  | 'crucible' // crisol de armonía: fusiona parejas solo (gasta carga)
+  | 'dynamo' // dínamo: convierte minerales en carga
+  | 'battery' // acumulador: amplía la capacidad de la red
+  | 'turbine'; // turbina de lava: genera carga cuando la lava late
+
+/** Edificios que el jugador puede construir. */
+export type Building = 'cofre' | 'forja' | 'crisol' | 'dinamo' | 'acumulador' | 'turbina';
+
+/** Casillas sólidas con las que un bot interactúa desde una casilla vecina. */
+export const INTERACTIVE: TileType[] = ['elevator', 'forge', 'core', 'chest', 'crucible', 'dynamo'];
 
 export interface Tile {
   t: TileType;
@@ -44,6 +55,8 @@ export interface Tile {
   beacon?: string; // A-D
   item?: Item | null;
   phase?: number; // desfase de la lava
+  store?: Item[]; // contenido de cofres y máquinas
+  timer?: number; // ticks restantes del proceso de una máquina
 }
 
 export type Color = 'rojo' | 'azul' | 'verde';
@@ -57,7 +70,10 @@ export type CondKind =
   | 'libre'
   | 'veta'
   | 'nivel'
-  | 'senal';
+  | 'senal'
+  | 'cofreVacio'
+  | 'parCofre'
+  | 'carga';
 
 export interface Cond {
   c: CondKind;
@@ -155,6 +171,9 @@ export interface Bot {
   stats: { mined: number; merges: number; sold: number; earned: number };
   captain?: boolean;
   guard: number; // evaluaciones de control en el tick actual
+  lowPower?: boolean; // nivel 3+: sin carga en la red, trabaja a mitad de velocidad
+  swapped?: boolean; // ya se movió al cruzarse con otro bot (salta su próximo paso)
+  wantMove?: number; // índice de la casilla a la que intenta entrar
   paused?: boolean; // detenido por el jugador
   heat: number;
   recruitedFrom?: string; // bot antiguo reparado
@@ -185,6 +204,8 @@ export interface Layer {
   glitches: Glitch[];
   broken: BrokenBot[];
   signals: Record<Color, number>;
+  energy: number; // carga de la red eléctrica de la capa
+  energyCap: number;
   elevator: [number, number];
   core?: [number, number];
   version: number; // cambia cuando cambia la geometría estática
@@ -209,6 +230,7 @@ export interface Routine {
   uses: number;
   lore?: boolean;
   origin?: [number, number, number]; // x, y, capa donde empezó la grabación
+  fn?: boolean; // función: aparece en la paleta como un bloque propio
 }
 
 export interface WorldStats {
@@ -229,6 +251,7 @@ export interface World {
   current: number;
   unlockedOps: Op[];
   unlockedConds: CondKind[];
+  buildings: Building[]; // edificios desbloqueados
   fusedRecipes: string[];
   library: Routine[];
   quests: { done: string[]; active: string | null };
@@ -255,4 +278,6 @@ export type SimEvent =
   | { e: 'overheat'; layer: number; x: number; y: number; botId: number }
   | { e: 'incident'; inc: Incident }
   | { e: 'core'; item: Item; botId: number }
-  | { e: 'fail'; layer: number; botId: number };
+  | { e: 'fail'; layer: number; botId: number }
+  | { e: 'machine'; layer: number; x: number; y: number; item: Item; kind: 'crucible' | 'forge' }
+  | { e: 'power'; layer: number; x: number; y: number; amount: number };

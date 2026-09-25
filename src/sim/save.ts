@@ -14,6 +14,14 @@ export function deserialize(json: string): World | null {
   try {
     const w = JSON.parse(json) as World;
     if (!w || !Array.isArray(w.layers)) return null;
+    // Migración de partidas anteriores a los edificios y la energía
+    w.buildings = w.buildings ?? [];
+    if (w.layers.length >= 2 && !w.buildings.includes('forja')) w.buildings.push('forja');
+    for (const l of w.layers) {
+      l.energy = l.energy ?? 0;
+      l.energyCap = l.energyCap ?? 300;
+      for (const t of l.tiles) if (t.t === 'forge' && t.item) (t.store = [t.item]), (t.item = null);
+    }
     let maxId = 0;
     for (const l of w.layers)
       for (const b of l.bots) {

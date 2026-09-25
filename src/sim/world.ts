@@ -1,5 +1,5 @@
 // Creación del mundo y generación procedural (determinista por semilla) de capas.
-import { BASE_CONDS, BASE_OPS, BOT_NAMES, LAYERS } from './content';
+import { BASE_CONDS, BASE_ENERGY_CAP, BASE_OPS, BOT_NAMES, LAYERS } from './content';
 import { cloneExact } from './program';
 import { mulberry32 } from './rng';
 import type { Block, Bot, Layer, Tile, World } from './types';
@@ -13,8 +13,10 @@ export function tileAt(l: Layer, x: number, y: number): Tile | null {
   return l.tiles[y * l.w + x];
 }
 
+/** Solo el suelo y la lava se pisan; montacargas, cofres y máquinas son sólidos
+ *  y se usan desde una casilla vecina. */
 export function isWalkable(t: Tile | null): boolean {
-  return !!t && (t.t === 'floor' || t.t === 'elevator' || t.t === 'forge' || t.t === 'lava' || t.t === 'core');
+  return !!t && (t.t === 'floor' || t.t === 'lava');
 }
 
 export function generateLayer(index: number, seed: number): Layer {
@@ -37,6 +39,8 @@ export function generateLayer(index: number, seed: number): Layer {
     glitches: [],
     broken: [],
     signals: { rojo: 0, azul: 0, verde: 0 },
+    energy: 0,
+    energyCap: BASE_ENERGY_CAP,
     elevator: [3, Math.floor(h / 2)],
     version: 1,
   };
@@ -182,6 +186,7 @@ export function createWorld(seed = Math.floor(Math.random() * 1e9)): World {
     current: 0,
     unlockedOps: [...BASE_OPS],
     unlockedConds: [...BASE_CONDS],
+    buildings: [],
     fusedRecipes: [],
     library: [],
     quests: { done: [], active: null },

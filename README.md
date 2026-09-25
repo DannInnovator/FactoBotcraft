@@ -42,6 +42,8 @@ En pantallas táctiles aparecen una cruceta y un botón USAR.
 - **5 capas** con mecánicas propias: la forja, la oscuridad, la lava que late y la gravedad girada.
 - **18 instrucciones** que se desbloquean **fusionándolas** en el Taller de Código (`mover + mover = avanzar hasta`, `repetir + si = mientras`, …).
 - **Bots con linaje:** al fusionar dos bots, el hijo sube de nivel, hereda código y rasgos y elige un rasgo nuevo entre tres.
+- **Automatización progresiva:** cofres accesibles por sus 4 lados, forja, crisol de armonía, dínamos, acumuladores y turbinas de lava, que se desbloquean con las órdenes de trabajo. Cada capa tiene su **red eléctrica**: los bots de nivel 3+ llevan motor eléctrico y las máquinas gastan carga.
+- **Funciones:** encapsula bloques con ƒ. Cuentan una sola vez en la memoria del bot y, si las mejoras, mejoran en todos los bots que las usan.
 - **Glitchlings** que corrompen el código de noche, y lámparas, bots Farolero y la instrucción `restaurar` para defenderse.
 - **Biblioteca del Gremio:** guarda, forkea e **intercambia rutinas con códigos FBC1** (sin servidor).
 - **Desafío Diario:** la misma cueva para todo el mundo ese día, comparada con la marca de ADA calculada en vivo.

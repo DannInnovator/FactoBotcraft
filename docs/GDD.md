@@ -213,6 +213,40 @@ Todo lo descrito en este documento está implementado y se puede jugar, salvo lo
 3. **Pase de arte y sonido**: modelos a mano para los bots de cada nivel y música compuesta por capas.
 4. **Empaquetado**: Steam (Tauri) con logros, y app móvil compañera con guardado en la nube.
 
+## 13. La escalera de la automatización
+
+Cada escalón resuelve un problema que el anterior hizo evidente. El jugador no recibe herramientas «porque sí»: primero siente el atasco y después recibe la solución.
+
+| Escalón | Cuándo | Qué se desbloquea | Problema que resuelve |
+|---|---|---|---|
+| **Aprendiz** | Capa 1, inicio | Grabar, bots, `repetir`, `si`, montacargas por sus 4 lados | «Hago siempre lo mismo a mano» |
+| **Oficial** | Capa 1, con dos bots trabajando | **Cofre**, `soltar/recoger` hacia una casilla vecina, cruces sin atasco (los bots se intercambian), condiciones de cofre | «Mis bots se estorban por las mismas casillas» |
+| **Artesano** | Capa 2 | **Forja** y **dínamo** (red eléctrica por capa), condición `carga ≥` | «Necesito combinar materiales distintos… y eso cuesta energía» |
+| **Mecánico** | Capa 2, con un bot de nivel 3 y 200 de carga generada | **Motor eléctrico** (bots nv3+ consumen carga; sin ella, mitad de velocidad) y **crisol de armonía** | «Quiero bots mejores y fusionar sin supervisión» |
+| **Maestro** | Capa 3 | **Acumulador**, **funciones** (encapsular bloques), señales, `ir a baliza` | «Mis programas son largos y se repiten; mi red se queda corta» |
+| **Ingeniero del Gremio** | Capa 4–5 | **Turbina de lava** (energía pasiva), `llevar a su par`, `restaurar` | «Quiero una mina que funcione sola, incluso contra la estática» |
+
+### Por qué la energía funciona así
+- **Los bots de nivel 1–2 son de cuerda y nunca se detienen.** Así el tutorial y el primer bot no dependen de una infraestructura que el jugador aún no entiende.
+- **Desde el nivel 3 los bots llevan motor eléctrico.** Subir de nivel (fusionar bots) crea la necesidad de energía: el linaje y la red se exigen mutuamente.
+- **Sin carga no se paran: trabajan a mitad de velocidad.** Castigar con una parada total rompería el Turno de Noche y generaría frustración. La penalización se nota, pero nunca bloquea.
+- **La carga sale de los mismos minerales que el Lumen.** Cada mineral es una decisión: venderlo para Alba o quemarlo para la mina. Aparecen flujos que se alimentan entre sí: una línea de carbón mueve el dínamo, el dínamo mueve el crisol y la forja, y estos alimentan la línea que vende.
+- **La turbina de lava da energía pasiva** como recompensa tardía a un buen diseño del espacio.
+
+### Funciones
+- Se desbloquean en el Taller (`repetir + repetir`). En el editor, **ƒ** selecciona bloques contiguos y «Crear función» los mueve a la Biblioteca y deja una llamada en su lugar.
+- Aparecen en la paleta como bloques propios.
+- **En la memoria del bot, el cuerpo de cada función cuenta una sola vez**, aunque se llame muchas veces. Es la recompensa por encapsular.
+- **Editar una función en la Biblioteca actualiza a todos los bots que la usan.** Arreglar una vez, arreglar para siempre (el lema de Konstrukta).
+
+### Siguientes escalones (ideas para después de la 1.0)
+- **Funciones con parámetros** (`vender(dirección)`) y valores de retorno para condiciones.
+- **Filtros en cofres** («solo cobre», «solo nivel ≥ 4») y un **clasificador** que reparte por tipo.
+- **Vagonetas sobre raíles** programables para transporte a larga distancia, sin quitar protagonismo a los bots.
+- **Planos de zona**: copiar una distribución de edificios y bots con sus programas y pegarla en otra veta (los *blueprints* de Factorio).
+- **Prioridades de la red**: qué consumidores reciben carga primero cuando escasea.
+- **Sensores**: condiciones sobre el estado de la red, de otros bots o de un cofre lejano, para coordinar sin señales explícitas.
+
 ## Anexo — Cómo llegamos aquí (iteraciones)
 
 | Iteración | Concepto | Por qué se descartó o evolucionó |
