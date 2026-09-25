@@ -11,6 +11,7 @@ import {
   ensureLoreLibrary,
   layerOf,
   loadProgram,
+  relocateBot,
   nextBotCost,
   placeBeacon,
   placeForge,
@@ -30,7 +31,7 @@ import { EMBLEM, FAVICON, icon } from './ui/icons';
 import * as P from './ui/panels';
 import { Tutorial } from './ui/tutorial';
 
-export type Mode = 'normal' | 'bot' | 'lamp' | 'forge' | 'beacon' | 'merge';
+export type Mode = 'normal' | 'bot' | 'lamp' | 'forge' | 'beacon' | 'merge' | 'relocate';
 
 export class Game {
   world!: World;
@@ -833,6 +834,16 @@ export class Game {
         this.setMode('normal');
         return;
       }
+      case 'relocate': {
+        const id = this.mergeFrom;
+        this.setMode('normal');
+        const r = relocateBot(w, id ?? -1, x, y);
+        if (!r.ok) return this.toast(r.msg, 'bad');
+        this.audio.merge(2);
+        this.renderer.sparkle(x, y, 0x6fe3d6);
+        this.selectBot(id);
+        return;
+      }
       case 'merge': {
         const b = l.bots.find((bb) => bb.x === x && bb.y === y && !bb.captain);
         const a = this.botById(this.mergeFrom);
@@ -916,6 +927,8 @@ export class Game {
         return t.t === 'floor' && !t.item && this.world.lumen >= FORGE_COST;
       case 'beacon':
         return isWalkable(t);
+      case 'relocate':
+        return isWalkable(t) && !l.bots.some((b) => b.x === x && b.y === y);
     }
     return false;
   }
@@ -929,6 +942,7 @@ export class Game {
       forge: `Elige una casilla de suelo libre para la forja (${FORGE_COST} ✦).`,
       beacon: `Elige dónde clavar la baliza ${this.beaconLetter}.`,
       merge: 'Elige el segundo bot (del mismo nivel) para fusionarlos.',
+      relocate: 'Elige la casilla de suelo libre donde quieres dejar el bot. Empezará su programa desde el principio. Esc para cancelar.',
     };
     if (texts[m]) {
       this.el.modeHint = h('div', { class: 'mode-hint plate' }, texts[m]!);

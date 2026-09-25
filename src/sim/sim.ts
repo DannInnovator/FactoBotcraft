@@ -525,6 +525,11 @@ function stepBot(world: World, l: Layer, bot: Bot, ev: SimEvent[], opts: TickOpt
     bot.action = null;
     return;
   }
+  // Un bot en pausa termina su acción en curso y se queda quieto
+  if (bot.paused) {
+    bot.action = null;
+    return;
+  }
   runProgram(world, l, bot, ev, opts);
 }
 

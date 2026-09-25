@@ -204,6 +204,13 @@ export const STEPS: Step[] = [
     text: () =>
       'Tus bots siguen trabajando aunque cierres el juego. Cuando vuelvas, te espera el Reporte del Amanecer: lo que ganaron, sus incidentes (con el bloque exacto que falló) y un timelapse de la noche.',
   },
+  {
+    chapter: 1,
+    title: 'Si un bot se atasca',
+    text: () =>
+      'Arriba del panel tienes el control del bot: «Pausar» lo detiene donde está, «Mover» te deja recogerlo y colocarlo en otra casilla (pulsa la casilla de destino) y «Reiniciar» hace que vuelva a empezar su programa desde el primer bloque. Útil cuando un bot se pierde o se queda en un lugar raro.',
+    target: q('.side .bot-actions'),
+  },
   // ---------- Capítulo 3: El editor ----------
   {
     chapter: 2,

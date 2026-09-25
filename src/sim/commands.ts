@@ -10,7 +10,7 @@ import {
   botCost,
   memoryFor,
 } from './content';
-import { cloneExact, cloneFresh, countBlocks } from './program';
+import { cloneExact, cloneFresh, countBlocks, sameProgram } from './program';
 import { hash } from './rng';
 import type { Block, Bot, Layer, Routine, TraitId, World } from './types';
 import { generateLayer, isWalkable, makeBot, setProgram, tileAt } from './world';
@@ -227,6 +227,35 @@ export function repairBroken(world: World, key: string): CmdResult & { bot?: Bot
   setProgram(bot, def.program());
   l.bots.push(bot);
   return { ok: true, bot };
+}
+
+export function togglePause(bot: Bot): boolean {
+  bot.paused = !bot.paused;
+  if (bot.paused) bot.status = 'paused';
+  else bot.status = !bot.program.length ? 'idle' : sameProgram(bot.program, bot.pristine) ? 'ok' : 'corrupt';
+  return bot.paused;
+}
+
+/** Vuelve a ejecutar el programa desde el primer bloque. */
+export function restartProgram(bot: Bot): void {
+  bot.stack = [];
+  bot.waitTicks = 0;
+  if (!bot.paused) bot.status = bot.program.length ? 'ok' : 'idle';
+}
+
+/** Recoge un bot y lo coloca en otra casilla de suelo libre de la misma capa. */
+export function relocateBot(world: World, botId: number, x: number, y: number): CmdResult {
+  const l = layerOf(world);
+  const bot = l.bots.find((b) => b.id === botId && !b.captain);
+  if (!bot) return fail('Ese bot ya no está en esta capa.');
+  if (bot.x === x && bot.y === y) return { ok: true };
+  if (!freeFloor(l, x, y)) return fail('Colócalo en una casilla de suelo libre.');
+  bot.x = x;
+  bot.y = y;
+  bot.busy = 0;
+  bot.action = null;
+  restartProgram(bot);
+  return { ok: true };
 }
 
 export function loadProgram(world: World, bot: Bot, blocks: Block[]): CmdResult {

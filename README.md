@@ -20,7 +20,7 @@ Al empezar una partida, **ADA te guía con un tutorial interactivo** (4 capítul
 1. **Juega.** Mueve al Capataz con WASD o las flechas. Camina contra una veta para picarla. E o Espacio suelta o recoge minerales.
 2. **Fusiona.** Dos minerales iguales, uno encima del otro, se funden en uno de nivel superior. En el montacargas se venden por Lumen (✦), y cada ✦ enciende una ventana de Alba, la ciudad de la superficie.
 3. **Graba.** Pulsa R, trabaja y vuelve a pulsar R. Tus acciones se convierten en un programa de bloques, y ADA te propone generalizarlo (bucles, condiciones).
-4. **Automatiza.** Ensambla bots, cárgales rutinas y mejóralas en el editor visual, que resalta en vivo el bloque en ejecución.
+4. **Automatiza.** Ensambla bots, cárgales rutinas y mejóralas en el editor visual, que resalta en vivo el bloque en ejecución. Si un bot se atasca, desde su panel puedes **pausarlo**, **moverlo** a otra casilla o **reiniciar** su programa.
 5. **Vuelve.** Tus bots trabajan el **Turno de Noche** mientras no juegas. Al volver te espera el **Reporte del Amanecer**, con lo ganado, los incidentes (con enlace al bloque exacto que falló) y un timelapse.
 
 | Tecla | Acción |

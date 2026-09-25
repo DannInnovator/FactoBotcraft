@@ -82,3 +82,31 @@ describe('Turno de Noche y guardado', () => {
     expect(back.layers[0].tiles.length).toBe(w.layers[0].tiles.length);
   });
 });
+
+describe('control de bots', () => {
+  it('pausar detiene al bot, reanudar lo devuelve al trabajo, mover lo reubica', async () => {
+    const { togglePause, relocateBot, restartProgram } = await import('../src/sim/commands');
+    const { tick } = await import('../src/sim/sim');
+    const w = createWorld(11);
+    w.lumen = 100;
+    const l = w.layers[0];
+    const [ex, ey] = l.elevator;
+    l.bots[0].x = 1;
+    const b = buyBot(w, ex + 1, ey + 2).bot!;
+    loadProgram(w, b, [mk('mover', { dir: 'E' }), mk('mover', { dir: 'W' })]);
+    expect(togglePause(b)).toBe(true);
+    expect(b.status).toBe('paused');
+    const x0 = b.x;
+    for (let i = 0; i < 50; i++) tick(w, []);
+    expect(b.x).toBe(x0);
+    expect(togglePause(b)).toBe(false);
+    for (let i = 0; i < 2; i++) tick(w, []);
+    expect(b.x).toBe(x0 + 1);
+    expect(relocateBot(w, b.id, ex + 2, ey - 2).ok).toBe(true);
+    expect([b.x, b.y]).toEqual([ex + 2, ey - 2]);
+    expect(b.stack).toEqual([]);
+    expect(relocateBot(w, b.id, 0, 0).ok).toBe(false); // roca madre
+    restartProgram(b);
+    expect(b.stack).toEqual([]);
+  });
+});

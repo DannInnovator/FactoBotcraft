@@ -704,6 +704,7 @@ export class Renderer {
       if (!b.captain) {
         if (b.status === 'corrupt') mood = 'corrupt';
         else if (b.status === 'overheat') mood = 'overheat';
+        else if (b.status === 'paused') mood = 'idle';
         else if (b.status === 'stuck') mood = 'stuck';
         else if ((o.happy.get(b.id) ?? 0) > o.tick) mood = 'happy';
         else if (working) mood = 'work';

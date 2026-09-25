@@ -121,7 +121,7 @@ export interface Frame {
   kind: 'root' | 'repetir' | 'si' | 'mientras' | 'llamar';
 }
 
-export type BotStatus = 'ok' | 'idle' | 'stuck' | 'overheat' | 'corrupt';
+export type BotStatus = 'ok' | 'idle' | 'stuck' | 'overheat' | 'corrupt' | 'paused';
 
 export interface Action {
   kind: 'move' | 'dig' | 'mine' | 'pick' | 'drop' | 'wait' | 'restore';
@@ -155,6 +155,7 @@ export interface Bot {
   stats: { mined: number; merges: number; sold: number; earned: number };
   captain?: boolean;
   guard: number; // evaluaciones de control en el tick actual
+  paused?: boolean; // detenido por el jugador
   heat: number;
   recruitedFrom?: string; // bot antiguo reparado
 }

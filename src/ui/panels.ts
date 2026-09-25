@@ -11,6 +11,8 @@ import {
   loadProgram,
   mergeBots,
   nextBotCost,
+  restartProgram,
+  togglePause,
   repairBroken,
   saveRoutine,
   traitOffers,
@@ -163,7 +165,7 @@ export function helpModal(g: Game): void {
 }
 
 // ---------- Panel lateral del bot ----------
-export const STATUS_TXT: Record<string, string> = { ok: 'trabajando', idle: 'sin programa', stuck: 'atascado', overheat: 'sobrecalentado', corrupt: 'código alterado' };
+export const STATUS_TXT: Record<string, string> = { ok: 'trabajando', idle: 'sin programa', stuck: 'atascado', overheat: 'sobrecalentado', corrupt: 'código alterado', paused: 'en pausa' };
 
 export function sidePanel(g: Game, bot: Bot, tab: 'prog' | 'ficha', onTab: (t: 'prog' | 'ficha') => void): HTMLElement {
   const panel = h(
@@ -194,6 +196,54 @@ export function sidePanel(g: Game, bot: Bot, tab: 'prog' | 'ficha', onTab: (t: '
     );
     return panel;
   }
+  panel.appendChild(
+    h(
+      'div',
+      { class: 'bot-actions', role: 'toolbar', 'aria-label': `Control de ${bot.name}` },
+      h(
+        'button',
+        {
+          class: `btn small ${bot.paused ? 'primary' : ''}`,
+          title: bot.paused ? 'Reanudar el programa' : 'Detener al bot donde está',
+          onclick: () => {
+            const p = togglePause(bot);
+            g.audio.click();
+            g.toast(p ? `${bot.name} en pausa.` : `${bot.name} vuelve al trabajo.`, 'good');
+            g.renderSide();
+          },
+        },
+        icon(bot.paused ? 'play' : 'pause', 14),
+        bot.paused ? 'Reanudar' : 'Pausar',
+      ),
+      h(
+        'button',
+        {
+          class: 'btn small',
+          title: 'Recoger el bot y dejarlo en otra casilla',
+          onclick: () => {
+            g.mergeFrom = bot.id;
+            g.setMode('relocate');
+          },
+        },
+        icon('target', 14),
+        'Mover',
+      ),
+      h(
+        'button',
+        {
+          class: 'btn small',
+          title: 'Volver a ejecutar el programa desde el primer bloque',
+          onclick: () => {
+            restartProgram(bot);
+            g.audio.click();
+            g.toast(`${bot.name} empieza su programa desde el principio.`, 'good');
+          },
+        },
+        icon('repetir', 14),
+        'Reiniciar',
+      ),
+    ),
+  );
   panel.appendChild(
     h(
       'div',
