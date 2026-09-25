@@ -15,7 +15,7 @@ function boot(): void {
     const box = document.createElement('div');
     box.className = 'title';
     box.innerHTML =
-      '<h1>FactoBotcraft</h1><p class="tag">Este navegador no pudo iniciar WebGL, que el juego necesita para dibujar la mina en 3D. Prueba con un navegador actualizado o activa la aceleración por hardware.</p>';
+      '<h1>Konstrukta</h1><p class="tag">Este navegador no pudo iniciar WebGL, que el juego necesita para dibujar la mina en 3D. Prueba con un navegador actualizado o activa la aceleración por hardware.</p>';
     ui.appendChild(box);
   }
 }

@@ -40,7 +40,7 @@ export class Game {
   paused = false;
   private acc = 0;
   private last = performance.now();
-  private keys = new Set<string>();
+  private keys = new Map<string, number>(); // tecla → momento en que se pulsó
   mode: Mode = 'normal';
   beaconLetter = 'A';
   selected: number | null = null;
@@ -548,7 +548,7 @@ export class Game {
       r.recorder.onstop = () => {
         const blob = new Blob(r.chunks, { type: 'video/webm' });
         const url = URL.createObjectURL(blob);
-        const a = h('a', { href: url, download: 'factobotcraft-turno-de-noche.webm' });
+        const a = h('a', { href: url, download: 'konstrukta-turno-de-noche.webm' });
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -586,11 +586,11 @@ export class Game {
 
   private bindInput(canvas: HTMLCanvasElement): void {
     window.addEventListener('keydown', (e) => {
-      if (!this.started || this.demo) return;
       if (e.key === 'Escape' && this.modals.open) {
         this.modals.close();
         return;
       }
+      if (!this.started || this.demo) return;
       if (this.isTyping(e)) return;
       this.audio.start();
       const k = e.key.toLowerCase();
@@ -609,8 +609,8 @@ export class Game {
       if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) {
         e.preventDefault();
         if (!this.keys.has(k)) {
-          this.keys.add(k);
-          this.tryMove(k);
+          this.keys.set(k, performance.now());
+          this.tryMove(k, true);
         }
         return;
       }
@@ -704,22 +704,26 @@ export class Game {
       else this.use();
       return;
     }
-    for (const k of this.keys) {
-      if (this.tryMove(k)) break;
+    // Mantener pulsada una tecla repite el paso, pero solo tras un breve retardo
+    // y sin encolar: así un toque corto es siempre exactamente un paso.
+    const now = performance.now();
+    for (const [k, t] of this.keys) {
+      if (now - t < 320) continue;
+      if (this.tryMove(k, false)) break;
     }
   }
 
-  tryMove(k: string): boolean {
+  tryMove(k: string, queue: boolean): boolean {
     const d = this.keyDir(k);
     if (!d) return false;
-    return this.moveCaptain(d);
+    return this.moveCaptain(d, queue);
   }
 
-  moveCaptain(d: Dir): boolean {
+  moveCaptain(d: Dir, queue = true): boolean {
     const ev: SimEvent[] = [];
     const cap = this.captain();
     if (cap.busy > 0) {
-      this.queued = { kind: 'move', dir: d };
+      if (queue) this.queued = { kind: 'move', dir: d };
       return false;
     }
     const r = captainMove(this.world, d, ev);
@@ -1057,7 +1061,7 @@ export class Game {
     this.el.hud = h(
       'div',
       { class: 'hud' },
-      h('div', { class: 'brand plate' }, h('h1', {}, 'FactoBotcraft')),
+      h('div', { class: 'brand plate' }, h('h1', {}, 'Konstrukta')),
       g('lumen', 'Lumen ✦', 'lumen'),
       g('frag', 'Estática ◆', 'frags'),
       g('alba', 'Ventanas de Alba', 'alba', true),

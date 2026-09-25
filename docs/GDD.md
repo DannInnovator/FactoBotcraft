@@ -1,4 +1,4 @@
-# FactoBotcraft — Documento de Diseño de Juego (GDD) v0.2
+# Konstrukta — Documento de Diseño de Juego (GDD) v0.2
 
 > **"Juega una vez. Tus bots juegan para siempre."**
 
@@ -162,6 +162,8 @@ Objetivo: probar que el **Pilar 1 + Pilar 2** son divertidos por sí solos.
 - Fusión de ores (niveles 1–5) y una receta mixta.
 - Fusión de bots con elección de 1 de 3 rasgos.
 - Turno de noche simulado + Reporte del Amanecer básico (stats + incidentes, sin video).
+
+**Nombre:** el juego se llama **Konstrukta**, como la mina (antes, FactoBotcraft).
 
 **Tecnología elegida:** TypeScript + Three.js en el navegador (la v0.1 anterior recomendaba Godot 4). Se cambió por tres motivos: 1) el juego se puede **jugar al instante desde un enlace**, sin instalar nada, lo que es clave para la demo y para compartir; 2) la simulación determinista en TypeScript puro corre igual en el navegador, en las pruebas y en un futuro servidor del Gremio; 3) empaquetar para Steam (Tauri/Electron) y móvil (Capacitor/PWA) sigue siendo directo. Si el proyecto crece hacia consolas, la simulación se puede portar tal cual porque no depende del render.
 

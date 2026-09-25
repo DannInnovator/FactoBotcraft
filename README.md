@@ -1,4 +1,6 @@
-# FactoBotcraft
+# Konstrukta
+
+*(Nombre de trabajo anterior: FactoBotcraft. El juego toma el nombre de la mina donde transcurre.)*
 
 > **Juega una vez. Tus bots juegan para siempre.**
 

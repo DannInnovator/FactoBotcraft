@@ -46,7 +46,7 @@ export function titleScreen(g: Game): void {
   });
   el.append(
     h('span', { class: 'label' }, 'Una mina · cinco capas · un solo verbo: fusionar'),
-    h('h1', {}, 'Facto', h('br'), 'Botcraft'),
+    h('h1', {}, 'Konstrukta'),
     h('p', { class: 'tag' }, 'Juega una vez. Tus bots juegan para siempre.'),
     h(
       'div',
@@ -104,7 +104,7 @@ function howTo(g: Game): void {
       'div',
       { class: 'prose' },
       h('p', {}, h('b', {}, '1. Juega. '), 'Mueve al Capataz (WASD o flechas). Camina contra una veta para picarla. Pulsa E para soltar o recoger minerales.'),
-      h('p', {}, h('b', {}, '2. Fusiona. '), 'Dos minerales iguales, uno sobre otro, se funden en uno de nivel superior que vale el doble. En el montacargas se venden por Lumen ✦.'),
+      h('p', {}, h('b', {}, '2. Fusiona. '), 'Dos minerales iguales, uno sobre otro, se funden en uno de nivel superior que vale más que las dos piezas juntas. En el montacargas se venden por Lumen ✦.'),
       h('p', {}, h('b', {}, '3. Graba. '), 'Pulsa R, trabaja y vuelve a pulsar R: tus acciones se convierten en un programa de bloques.'),
       h('p', {}, h('b', {}, '4. Automatiza. '), 'Ensambla bots, cárgales tus rutinas y mejóralas en el editor. Siguen trabajando aunque cierres el juego.'),
       h('p', {}, h('b', {}, 'Cámara: '), 'arrastra para moverla, rueda para acercar, Q para girar, F para volver al Capataz.'),

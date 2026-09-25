@@ -1,4 +1,4 @@
-// El universo de FactoBotcraft: Konstrukta, Alba, el Gremio, Mireya, ADA y el Núcleo.
+// El universo de Konstrukta: Konstrukta, Alba, el Gremio, Mireya, ADA y el Núcleo.
 // Todo el texto narrativo del juego vive aquí.
 import { adaProgram } from '../sim/challenge';
 import { mk } from '../sim/program';

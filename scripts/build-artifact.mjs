@@ -14,7 +14,7 @@ const css = files.filter((f) => f.endsWith('.css')).map((f) => readFileSync(join
 if (js.length !== 1) throw new Error(`Se esperaba un único bundle JS y hay ${js.length}`);
 const cdn = `https://cdn.jsdelivr.net/npm/three@${THREE}`;
 const safeJs = js[0].replace(/<\/script/gi, '<\\/script');
-const html = `<title>FactoBotcraft</title>
+const html = `<title>Konstrukta</title>
 <meta name="description" content="Juega una vez. Tus bots juegan para siempre.">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&family=Lilita+One&display=swap">
 <style>${css.join('\n')}</style>

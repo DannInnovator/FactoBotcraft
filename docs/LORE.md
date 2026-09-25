@@ -3,7 +3,7 @@
 > *«Lo que se hace bien una vez, se hace bien para siempre.»*
 > Lema grabado en la puerta del montacargas de Konstrukta.
 
-Este documento reúne el mundo, los personajes y las reglas narrativas de FactoBotcraft. El texto que se ve en el juego vive en `src/content/lore.ts` y `src/content/quests.ts`; este documento explica el **porqué** para que cualquier ampliación mantenga la coherencia.
+Este documento reúne el mundo, los personajes y las reglas narrativas del juego Konstrukta. El texto que se ve en el juego vive en `src/content/lore.ts` y `src/content/quests.ts`; este documento explica el **porqué** para que cualquier ampliación mantenga la coherencia.
 
 ---
 

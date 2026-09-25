@@ -1,4 +1,4 @@
-/* FactoBotcraft — interfaz de instrumentos de mina: hollín, latón y luz de lámpara.
+/* Konstrukta — interfaz de instrumentos de mina: hollín, latón y luz de lámpara.
    Diseño deliberadamente oscuro (una cueva): una sola paleta, colores explícitos. */
 :root {
   color-scheme: dark;
@@ -873,7 +873,7 @@ h3 {
   justify-content: center;
   padding: 16px;
   backdrop-filter: blur(3px);
-  z-index: 20;
+  z-index: 40; /* por encima de la pantalla de título (30) */
 }
 .modal {
   width: min(760px, 100%);
