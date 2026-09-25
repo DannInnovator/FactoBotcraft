@@ -24,6 +24,7 @@ import { setProgram } from '../sim/world';
 import { add, copyText, fmt, fmtTime, h } from './dom';
 import { CAT_COLOR, ProgramEditor } from './editor';
 import { icon, logoHtml } from './icons';
+import { CHAPTERS } from './tutorial';
 
 const rn = (g: Game) => (id: string) => g.world.library.find((r) => r.id === id)?.name ?? '¿?';
 
@@ -109,6 +110,54 @@ function howTo(g: Game): void {
       h('p', {}, h('b', {}, '3. Graba. '), 'Pulsa R, trabaja y vuelve a pulsar R: tus acciones se convierten en un programa de bloques.'),
       h('p', {}, h('b', {}, '4. Automatiza. '), 'Ensambla bots, cárgales tus rutinas y mejóralas en el editor. Siguen trabajando aunque cierres el juego.'),
       h('p', {}, h('b', {}, 'Cámara: '), 'arrastra para moverla, rueda para acercar, Q para girar, F para volver al Capataz.'),
+    ),
+  });
+}
+
+// ---------- Ayuda ----------
+export function helpModal(g: Game): void {
+  let modal: { close: () => void } | null = null;
+  const start = (c: number) => {
+    modal?.close();
+    if (g.tutorial.active) g.tutorial.stop();
+    g.tutorial.start(c);
+  };
+  modal = g.modals.show({
+    title: 'Ayuda',
+    cls: 'narrow',
+    body: h(
+      'div',
+      { class: 'stack' },
+      h('p', { style: 'margin:0' }, 'El tutorial guiado te enseña todo paso a paso, dentro de tu propia partida. Elige desde dónde empezar:'),
+      h(
+        'div',
+        { class: 'stack', style: 'gap:6px' },
+        CHAPTERS.map((c, i) =>
+          h(
+            'button',
+            { class: `btn ${i === 0 ? 'primary' : ''}`, style: 'justify-content:flex-start', onclick: () => start(i) },
+            h('span', { class: 'num' }, `${i + 1}.`),
+            c,
+          ),
+        ),
+      ),
+      h('div', { class: 'label' }, 'Controles'),
+      h(
+        'div',
+        { class: 'kv' },
+        h('span', {}, 'Moverse (contra una roca: picar)'),
+        h('span', {}, 'WASD / flechas'),
+        h('span', {}, 'Soltar o recoger'),
+        h('span', {}, 'E / Espacio'),
+        h('span', {}, 'Grabar'),
+        h('span', {}, 'R'),
+        h('span', {}, 'Girar cámara / seguir al Capataz'),
+        h('span', {}, 'Q / F'),
+        h('span', {}, 'Siguiente bot'),
+        h('span', {}, 'Tab'),
+        h('span', {}, 'Pausa'),
+        h('span', {}, 'P'),
+      ),
     ),
   });
 }

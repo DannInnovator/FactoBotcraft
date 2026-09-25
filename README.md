@@ -15,6 +15,8 @@ Referencias: *Craftomation 101* (programar bots), *Factorio* (cadenas de producc
 
 ## Cómo se juega
 
+Al empezar una partida, **ADA te guía con un tutorial interactivo** (4 capítulos: lo básico, grabar y automatizar, el editor y las herramientas). Señala en pantalla lo que tienes que pulsar y espera a que lo hagas. Puedes repetir cualquier capítulo desde el botón de ayuda (?) de arriba a la derecha.
+
 1. **Juega.** Mueve al Capataz con WASD o las flechas. Camina contra una veta para picarla. E o Espacio suelta o recoge minerales.
 2. **Fusiona.** Dos minerales iguales, uno encima del otro, se funden en uno de nivel superior. En el montacargas se venden por Lumen (✦), y cada ✦ enciende una ventana de Alba, la ciudad de la superficie.
 3. **Graba.** Pulsa R, trabaja y vuelve a pulsar R. Tus acciones se convierten en un programa de bloques, y ADA te propone generalizarlo (bucles, condiciones).

@@ -28,6 +28,7 @@ import { Modals, add, fmt, h } from './ui/dom';
 import { ProgramEditor } from './ui/editor';
 import { EMBLEM, FAVICON, icon } from './ui/icons';
 import * as P from './ui/panels';
+import { Tutorial } from './ui/tutorial';
 
 export type Mode = 'normal' | 'bot' | 'lamp' | 'forge' | 'beacon' | 'merge';
 
@@ -58,6 +59,8 @@ export class Game {
   private lastSave = 0;
   private lastToast = new Map<string, number>();
   private adaQueue: string[] = [];
+  private adaDeferred: string[] = [];
+  readonly tutorial: Tutorial = new Tutorial(this);
   private adaEl: HTMLElement | null = null;
   private adaTimer = 0;
   private lastTip = 0;
@@ -126,7 +129,9 @@ export class Game {
     this.renderer.stopCinematic();
     const l = layerOf(this.world);
     this.renderer.focus(l.elevator[0] + 1, l.elevator[1], true);
+    this.tutorial.active = true; // el tutorial sustituye a las presentaciones de ADA
     this.begin();
+    this.tutorial.start(0);
     this.save();
   }
 
@@ -140,6 +145,7 @@ export class Game {
     const cap = this.captain();
     this.renderer.focus(cap.x, cap.y, true);
     this.begin();
+    this.tutorial.resume();
     const away = Date.now() - w.lastSaved;
     if (away > 60_000) this.runOffline(away);
   }
@@ -192,6 +198,11 @@ export class Game {
   }
 
   say(text: string): void {
+    // Mientras habla el tutorial, ADA guarda lo que quería decir para después
+    if (this.tutorial.active) {
+      this.adaDeferred.push(text);
+      return;
+    }
     this.adaQueue.push(text);
     if (!this.adaEl) this.nextAda();
   }
@@ -213,6 +224,15 @@ export class Game {
     this.adaTimer = window.setTimeout(() => this.nextAda(), Math.max(6000, text.length * 55));
   }
 
+  /** Al terminar o salir del tutorial, ADA retoma la conversación. */
+  onTutorialEnd(): void {
+    const q = this.activeQuest();
+    const pending = this.adaDeferred.splice(0);
+    if (q) this.say(q.ada);
+    pending.slice(-2).forEach((t) => this.say(t));
+    this.save();
+  }
+
   // ---------- Órdenes de trabajo ----------
   activeQuest(): Quest | null {
     const id = this.world.quests.active;
@@ -223,7 +243,7 @@ export class Game {
     const next = QUESTS.find((q) => !this.world.quests.done.includes(q.id)) ?? null;
     const changed = this.world.quests.active !== (next?.id ?? null);
     this.world.quests.active = next?.id ?? null;
-    if (next && (changed || initial) && !(initial && this.world.quests.done.length > 0)) this.say(next.ada);
+    if (next && (changed || initial) && !(initial && this.world.quests.done.length > 0) && !this.tutorial.active) this.say(next.ada);
     this.renderOrders();
   }
 
@@ -238,7 +258,7 @@ export class Game {
     this.audio.fanfare();
     this.toast(`✔ Orden completada: ${q.title}${r?.lumen ? ` (+${r.lumen} ✦)` : ''}${r?.frags ? ` (+${r.frags} ◆)` : ''}`, 'good');
     if (q.id === 'q-bot') this.celebrateIgnition();
-    if (q.onDone) this.say(q.onDone);
+    if (q.onDone && !this.tutorial.active) this.say(q.onDone);
     this.activateQuest();
     this.save();
   }
@@ -441,6 +461,7 @@ export class Game {
       }
       this.updateHud();
     }
+    if (this.started && !this.demo && !this.replay && !this.challenge) this.tutorial.update();
     if (this.editor && this.editorBot != null) {
       const b = this.botById(this.editorBot);
       if (b) this.editor.highlight(b.cur);
@@ -1059,7 +1080,7 @@ export class Game {
   private buildHud(): void {
     this.ui.querySelectorAll('.hud,.orders,.toolbar,.toasts,.compass,.touchpad,.touchact').forEach((e) => e.remove());
     const g = (cls: string, label: string, id: string, bar = false, ic = '') =>
-      h('div', { class: `gauge plate ${cls}` }, h('span', { class: 'label' }, ic ? icon(ic, 12) : null, label), (this.el[id] = h('span', { class: 'v' }, '0')), bar ? h('div', { class: 'bar' }, (this.el[id + 'Bar'] = h('i', { style: 'width:0%' }))) : null);
+      h('div', { class: `gauge plate ${cls}` }, h('span', { class: 'label', title: label }, ic ? icon(ic, 12) : null, h('span', { class: 'lt' }, label)), (this.el[id] = h('span', { class: 'v' }, '0')), bar ? h('div', { class: 'bar' }, (this.el[id + 'Bar'] = h('i', { style: 'width:0%' }))) : null);
     this.el.hud = h(
       'div',
       { class: 'hud' },
@@ -1081,6 +1102,7 @@ export class Game {
         (this.el.pause = h('button', { class: 'btn', title: 'Pausa (P)', 'aria-label': 'Pausa', onclick: () => this.togglePause() }, icon('pause', 16))),
         (this.el.s1 = h('button', { class: 'btn', title: 'Velocidad normal', onclick: () => ((this.speed = 1), this.updateHud(true)) }, '1×')),
         (this.el.s3 = h('button', { class: 'btn', title: 'Velocidad ×3', onclick: () => ((this.speed = 3), this.updateHud(true)) }, '3×')),
+        h('button', { class: 'btn', title: 'Ayuda y tutorial', 'aria-label': 'Ayuda y tutorial', onclick: () => P.helpModal(this) }, icon('si', 17)),
         h('button', { class: 'btn', title: 'Ajustes', 'aria-label': 'Ajustes', onclick: () => P.settingsModal(this) }, icon('settings', 17)),
       ),
     );
@@ -1116,7 +1138,7 @@ export class Game {
       tb.appendChild(
         h(
           'button',
-          { class: `tool ${on ? 'on' : ''} ${extra} ${locked ? 'locked' : ''}`, title, onclick: () => (this.audio.start(), this.audio.click(), fn()) },
+          { class: `tool ${on ? 'on' : ''} ${extra} ${locked ? 'locked' : ''}`, title, 'data-tool': title, onclick: () => (this.audio.start(), this.audio.click(), fn()) },
           h('span', { class: 'i' }, icon(iconName, 22)),
           h('span', { class: 't' }, title),
           cost ? h('span', { class: 'c' }, cost) : null,
