@@ -586,7 +586,12 @@ export class Game {
 
   private bindInput(canvas: HTMLCanvasElement): void {
     window.addEventListener('keydown', (e) => {
-      if (!this.started || this.demo || this.isTyping(e)) return;
+      if (!this.started || this.demo) return;
+      if (e.key === 'Escape' && this.modals.open) {
+        this.modals.close();
+        return;
+      }
+      if (this.isTyping(e)) return;
       this.audio.start();
       const k = e.key.toLowerCase();
       if (this.replay) {
@@ -1090,11 +1095,17 @@ export class Game {
     this.updateHud(true);
   }
 
+  private toolbarSig = '';
+
   renderToolbar(): void {
     const tb = this.el.toolbar;
     if (!tb) return;
-    tb.innerHTML = '';
     const w = this.world;
+    // Solo se reconstruye si cambia algo visible (costes, modo, desbloqueos)
+    const sig = [this.mode, !!this.recording, nextBotCost(w), w.layers.length, w.unlockedOps.includes('irA'), canDescend(w).ok].join('|');
+    if (sig === this.toolbarSig && tb.childElementCount) return;
+    this.toolbarSig = sig;
+    tb.innerHTML = '';
     const tool = (icon: string, title: string, cost: string | null, on: boolean, fn: () => void, extra = '', locked = false) =>
       tb.appendChild(
         h(

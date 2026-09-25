@@ -270,7 +270,7 @@ export function botCost(owned: number): number {
 export const LAMP_COST = 15;
 export const FORGE_COST = 150;
 export const RESTORE_COST = 5;
-export const REPAIR_COST = [0, 0, 400, 3000, 25000, 0];
+export const REPAIR_COST = [0, 400, 3000, 25000, 0]; // por índice de capa
 
 export const BOT_NAMES = [
   'Pico', 'Pala', 'Tuerca', 'Chispa', 'Brasa', 'Veta', 'Guijarro', 'Rulo', 'Farol', 'Bisagra',
