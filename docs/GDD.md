@@ -86,7 +86,7 @@ Así la sesión siguiente empieza sola: *arreglar el bug de anoche*. Es el ganch
 
 ## 4. El mundo: una cueva que baja
 
-Vista 2D top-down, en cuadrícula. El espacio es escaso: excavar cuesta tiempo de los bots, así que cada casilla cuenta (lección de MineMergeMatic).
+Cuadrícula por capa, vista como diorama 3D (ver sección 4b). El espacio es escaso: excavar cuesta tiempo de los bots, así que cada casilla cuenta (lección de MineMergeMatic).
 
 | Capa | Ores / materiales | Regla nueva | Peligro |
 |---|---|---|---|
@@ -97,6 +97,24 @@ Vista 2D top-down, en cuadrícula. El espacio es escaso: excavar cuesta tiempo d
 | 5. El Vacío | ??? | La gravedad cambia la dirección de `mover` | Glitchlings |
 
 **Los Glitchlings: los bugs son literales.** Son criaturitas de la corrupción que aparecen de noche y **reordenan o borran bloques del código** de los bots que tocan. Para defenderte programas: rutinas de guardia, checksums ("si mi programa cambió → volver a la base") y bots reparadores. La programación defensiva se enseña como mecánica de supervivencia.
+
+## 4b. Dirección visual: 3D "diorama cozy" sobre cuadrícula lógica
+
+**Decisión:** el juego se **renderiza en 3D estilizado**, pero la **lógica es una cuadrícula 2D por capa**. Así tenemos la belleza del 3D con la claridad que necesita un juego de programación (`mover →` siempre significa exactamente una casilla).
+
+| Aspecto | Decisión |
+|---|---|
+| **Simulación** | Cuadrícula de casillas por capa; las capas se apilan en profundidad. Determinista, por ticks. |
+| **Render** | 3D low-poly estilizado con sombreado suave (o voxel, ver abajo). |
+| **Cámara** | Ortográfica en ángulo isométrico por defecto (legibilidad) con rotación en pasos de 90°, zoom libre y un **modo cine** en perspectiva para el timelapse del Reporte del Amanecer. |
+| **Cueva legible** | Vista de **diorama en corte**: sin techo, y las paredes cercanas a la cámara se recortan o se vuelven translúcidas. Cada capa es una "maqueta" y bajar de capa es bajar por la maqueta. |
+| **Lo cozy** | La cueva es oscura: **la luz es la recompensa**. Lámparas cálidas, ores que brillan (emisión + bloom), vapor, polvo en el aire, un leve tilt-shift que da sensación de miniatura. |
+| **Feedback de fusión** | Cada fusión tiene un "pop" (escala elástica, partículas, sonido tonal que sube con el nivel). Es el momento más repetido del juego y debe dar gusto verlo mil veces. |
+| **Bots** | Cuerpos simples hechos de piezas modulares, con **una pantalla-cara expresiva** (ojos) que comunica su estado: trabajando, atascado, feliz o corrompido. Los rasgos del linaje se ven como accesorios. |
+| **Producción de arte** | Kit modular de casillas (suelo, pared, ore, máquina) + bots ensamblados por piezas. Opción económica para un equipo pequeño: **voxel** (MagicaVoxel), que además conecta con la estética de Minecraft. |
+| **Rendimiento** | Instanciado (MultiMesh en Godot) para ores y bots, LOD simple y luces horneadas cuando sea posible, para que cientos de bots funcionen en PC y en el compañero móvil. |
+
+Referencias visuales: *Tiny Glade*, *Townscaper*, *Dorfromantik*, *Shapez 2* (fábrica sobre cuadrícula en 3D), *Craftomation 101* (bots low-poly en mundos pequeños), *Minecraft* (voxel y luz en cuevas).
 
 ## 5. Historia (ligera, contada a través del código)
 La mina "Konstrukta" funcionaba sola hasta que algo en las profundidades la corrompió. Encuentras **bots antiguos averiados** cuyo código contiene comentarios de los ingenieros originales. Para repararlos y reclutarlos tienes que **leer y depurar su código**. La historia se descubre ahí: comentarios, logs y rutinas abandonadas que apuntan hacia el Vacío.
@@ -137,7 +155,7 @@ La mina "Konstrukta" funcionaba sola hasta que algo en las profundidades la corr
 
 Objetivo: probar que el **Pilar 1 + Pilar 2** son divertidos por sí solos.
 
-- Cuadrícula 2D, capa 1 (piedra, cobre), espacio limitado y excavable.
+- Cuadrícula lógica de la capa 1 (piedra, cobre) renderizada en 3D con cajas grises e iluminación básica; espacio limitado y excavable.
 - Capataz controlado a mano + modo Grabar con línea de tiempo de bloques.
 - 3 bots cargables con programas grabados.
 - 8 instrucciones base y 4 fusiones de instrucción (`mover hasta`, `picar área`, `si/si no`, `repetir`).
@@ -145,7 +163,7 @@ Objetivo: probar que el **Pilar 1 + Pilar 2** son divertidos por sí solos.
 - Fusión de bots con elección de 1 de 3 rasgos.
 - Turno de noche simulado + Reporte del Amanecer básico (stats + incidentes, sin video).
 
-**Tecnología recomendada:** Godot 4. Es libre, fuerte en 2D, exporta a PC, web y móvil (clave para el compañero móvil) y permite una **simulación determinista por ticks**, imprescindible para el idle offline, los fantasmas y los replays.
+**Tecnología recomendada:** Godot 4. Es libre, maneja bien el 3D estilizado, exporta a PC, web y móvil (clave para el compañero móvil) y permite una **simulación determinista por ticks**, imprescindible para el idle offline, los fantasmas y los replays.
 
 ## 10. Hoja de ruta
 
