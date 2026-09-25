@@ -80,6 +80,7 @@ export class Game {
   editorDirty = false;
   private sideTab: 'prog' | 'ficha' = 'prog';
   private sideStatus = '';
+  sideCollapsed = false;
   private hudTimer = 0;
 
   constructor(canvas: HTMLCanvasElement, ui: HTMLElement) {
@@ -1098,6 +1099,7 @@ export class Game {
     this.editorDirty = false;
     this.el.toasts?.classList.remove('shift');
     const bot = this.botById(this.selected);
+    this.ui.classList.toggle('side-open', !!bot);
     if (!bot) return;
     this.el.toasts?.classList.add('shift');
     this.sideStatus = bot.status;

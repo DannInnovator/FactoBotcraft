@@ -171,7 +171,7 @@ export const STATUS_TXT: Record<string, string> = { ok: 'trabajando', idle: 'sin
 export function sidePanel(g: Game, bot: Bot, tab: 'prog' | 'ficha', onTab: (t: 'prog' | 'ficha') => void): HTMLElement {
   const panel = h(
     'aside',
-    { class: 'side plate', 'aria-label': `Bot ${bot.name}` },
+    { class: `side plate ${g.sideCollapsed ? 'collapsed' : ''}`, 'aria-label': `Bot ${bot.name}` },
     h(
       'header',
       {},
@@ -179,6 +179,19 @@ export function sidePanel(g: Game, bot: Bot, tab: 'prog' | 'ficha', onTab: (t: '
       bot.captain ? null : h('span', { class: 'lvl-badge' }, `nv${bot.lvl}`),
       bot.captain ? null : h('span', { class: `status-pill ${bot.status}` }, STATUS_TXT[bot.status]),
       !bot.captain && bot.lowPower && bot.lvl >= 3 ? h('span', { class: 'status-pill power', title: 'Motor eléctrico sin carga: trabaja a mitad de velocidad' }, 'sin carga') : null,
+      h(
+        'button',
+        {
+          class: 'btn ghost small side-fold',
+          'aria-label': g.sideCollapsed ? 'Desplegar panel' : 'Plegar panel',
+          'aria-expanded': String(!g.sideCollapsed),
+          onclick: () => {
+            g.sideCollapsed = !g.sideCollapsed;
+            g.renderSide();
+          },
+        },
+        icon('mover', 14),
+      ),
       h('button', { class: 'btn ghost small x', 'aria-label': 'Cerrar', onclick: () => g.selectBot(null) }, icon('close', 16)),
     ),
   );

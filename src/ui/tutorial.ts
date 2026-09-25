@@ -326,6 +326,8 @@ export class Tutorial {
   private markers: HTMLElement[] = [];
   private stepEnteredAt = 0;
   private scrolled: Element | null = null;
+  private collapsed = false;
+  private userToggled = false;
 
   constructor(g: Game) {
     this.g = g;
@@ -333,11 +335,13 @@ export class Tutorial {
 
   start(chapter = 0): void {
     this.active = true;
+    this.g.ui.classList.add('tut-on');
     this.goTo(STEPS.findIndex((s) => s.chapter === chapter));
   }
 
   stop(completed = false): void {
     this.active = false;
+    this.g.ui.classList.remove('tut-on');
     this.card?.remove();
     this.ring?.remove();
     this.clearMarkers();
@@ -352,6 +356,7 @@ export class Tutorial {
     const s = Number(this.g.world.flags.tutStep ?? -1);
     if (s >= 0 && s < STEPS.length) {
       this.active = true;
+      this.g.ui.classList.add('tut-on');
       this.goTo(s);
     }
   }
@@ -361,6 +366,8 @@ export class Tutorial {
     this.i = Math.max(0, i);
     this.ctx = {};
     this.stepEnteredAt = performance.now();
+    this.collapsed = false; // cada paso nuevo se muestra entero
+    this.userToggled = false;
     this.g.world.flags.tutStep = this.i;
     STEPS[this.i].enter?.(this.g, this.ctx);
     this.render();
@@ -380,7 +387,26 @@ export class Tutorial {
     this.card = h(
       'div',
       { class: 'tut plate', role: 'dialog', 'aria-label': `Tutorial: ${s.title}` },
-      h('div', { class: 'tut-head' }, h('div', { class: 'radio', 'aria-hidden': 'true' }, h('i'), h('i'), h('i'), h('i')), h('div', {}, h('span', { class: 'label' }, `${s.chapter + 1}. ${CHAPTERS[s.chapter]} · ${pos}/${chapterSteps.length}`), h('h3', {}, s.title))),
+      h(
+        'div',
+        { class: 'tut-head' },
+        h('div', { class: 'radio', 'aria-hidden': 'true' }, h('i'), h('i'), h('i'), h('i')),
+        h('div', { class: 'tut-titles' }, h('span', { class: 'label' }, `${s.chapter + 1}. ${CHAPTERS[s.chapter]} · ${pos}/${chapterSteps.length}`), h('h3', {}, s.title)),
+        h(
+          'button',
+          {
+            class: 'btn ghost small tut-fold',
+            'aria-label': this.collapsed ? 'Mostrar instrucciones' : 'Plegar instrucciones',
+            'aria-expanded': String(!this.collapsed),
+            onclick: () => {
+              this.collapsed = !this.card?.classList.contains('collapsed');
+              this.userToggled = true;
+              this.card?.classList.toggle('collapsed', this.collapsed);
+            },
+          },
+          icon('mover', 14),
+        ),
+      ),
       h('p', { class: 'tut-text' }, s.text(this.g)),
       h('div', { class: 'tut-bar' }, h('i', { style: `width:${((this.i + 1) / STEPS.length) * 100}%` })),
       h(
@@ -397,7 +423,31 @@ export class Tutorial {
             ],
       ),
     );
+    this.card.classList.toggle('collapsed', this.collapsed);
     this.g.ui.appendChild(this.card);
+  }
+
+  /**
+   * Dónde vive la tarjeta: con una ventana abierta, dentro de ella (arriba), para
+   * no tapar sus botones; en el móvil con el panel del bot abierto, plegada.
+   */
+  private place(): void {
+    const card = this.card!;
+    const narrow = window.innerWidth < 760;
+    const backs = this.g.ui.querySelectorAll('.modal-back');
+    const body = backs.length ? backs[backs.length - 1].querySelector('.modal .body') : null;
+    if (body) {
+      if (card.parentElement !== body) body.prepend(card);
+      card.classList.add('inline');
+      card.classList.remove('over-modal');
+    } else {
+      if (card.parentElement !== this.g.ui) this.g.ui.appendChild(card);
+      card.classList.remove('inline');
+    }
+    const sideOpen = !!this.g.ui.querySelector('.side');
+    // En el móvil, con el panel del bot abierto, se pliega sola salvo que la abras tú
+    const auto = narrow && sideOpen && !body;
+    card.classList.toggle('collapsed', this.userToggled ? this.collapsed : this.collapsed || auto);
   }
 
   private clearMarkers(): void {
@@ -421,8 +471,7 @@ export class Tutorial {
   update(): void {
     if (!this.active || !this.card) return;
     const s = STEPS[this.i];
-    // Con una ventana abierta, la tarjeta se hace compacta y se aparta a una esquina
-    this.card.classList.toggle('over-modal', this.g.modals.open);
+    this.place();
     // Condición cumplida → siguiente paso (con un pequeño margen para que se note)
     if (s.done && performance.now() - this.stepEnteredAt > 400 && s.done(this.g, this.ctx)) {
       this.g.audio.fanfare();
@@ -431,7 +480,10 @@ export class Tutorial {
     }
     // Resalte de interfaz
     const el = s.target?.(this.g) as HTMLElement | null | undefined;
-    if (el && el.offsetParent !== null) {
+    const backs = this.g.ui.querySelectorAll('.modal-back');
+    const top = backs.length ? backs[backs.length - 1] : null;
+    const visible = !!el && el.offsetParent !== null && (!top || top.contains(el));
+    if (el && visible) {
       // Lleva a la vista el elemento señalado (una sola vez por paso)
       if (this.scrolled !== el) {
         this.scrolled = el;

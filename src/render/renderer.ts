@@ -220,6 +220,11 @@ export class Renderer {
     const h = this.canvas.clientHeight || window.innerHeight;
     this.gl.setSize(w, h, false);
     this.camera.aspect = w / h;
+    // En pantallas altas y estrechas (móvil) la interfaz ocupa la parte superior:
+    // desplazamos el encuadre para que lo que sigue la cámara quede más abajo.
+    const shift = w < 760 && h > w ? Math.round(h * 0.12) : 0;
+    if (shift) this.camera.setViewOffset(w, h, 0, -shift, w, h);
+    else this.camera.clearViewOffset();
     this.camera.updateProjectionMatrix();
     this.composer?.setSize(w, h);
     if (this.tilt) (this.tilt.uniforms.res.value as THREE.Vector2).set(w, h);
