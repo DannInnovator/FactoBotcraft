@@ -23,6 +23,7 @@ import type { Block, Bot, TraitId } from '../sim/types';
 import { setProgram } from '../sim/world';
 import { add, copyText, fmt, fmtTime, h } from './dom';
 import { CAT_COLOR, ProgramEditor } from './editor';
+import { icon, logoHtml } from './icons';
 
 const rn = (g: Game) => (id: string) => g.world.library.find((r) => r.id === id)?.name ?? '¿?';
 
@@ -46,7 +47,7 @@ export function titleScreen(g: Game): void {
   });
   el.append(
     h('span', { class: 'label' }, 'Una mina · cinco capas · un solo verbo: fusionar'),
-    h('h1', {}, 'Konstrukta'),
+    h('h1', { class: 'title-logo', html: logoHtml('lg'), 'aria-label': 'Konstrukta' }),
     h('p', { class: 'tag' }, 'Juega una vez. Tus bots juegan para siempre.'),
     h(
       'div',
@@ -125,7 +126,7 @@ export function sidePanel(g: Game, bot: Bot, tab: 'prog' | 'ficha', onTab: (t: '
       h('h2', {}, bot.name),
       bot.captain ? null : h('span', { class: 'lvl-badge' }, `nv${bot.lvl}`),
       bot.captain ? null : h('span', { class: `status-pill ${bot.status}` }, STATUS_TXT[bot.status]),
-      h('button', { class: 'btn ghost small x', 'aria-label': 'Cerrar', onclick: () => g.selectBot(null) }, '✕'),
+      h('button', { class: 'btn ghost small x', 'aria-label': 'Cerrar', onclick: () => g.selectBot(null) }, icon('close', 16)),
     ),
   );
   if (bot.captain) {
@@ -179,8 +180,8 @@ export function sidePanel(g: Game, bot: Bot, tab: 'prog' | 'ficha', onTab: (t: '
       h(
         'div',
         { class: 'row', style: 'margin-bottom:8px' },
-        h('button', { class: 'btn small', 'data-apply': '1', onclick: apply, title: 'Cargar el programa editado en el bot' }, '▶ Aplicar'),
-        h('button', { class: 'btn small ghost', onclick: () => g.syncEditor(true) }, 'Deshacer'),
+        h('button', { class: 'btn small', 'data-apply': '1', onclick: apply, title: 'Cargar el programa editado en el bot' }, icon('play', 14), 'Aplicar'),
+        h('button', { class: 'btn small ghost', onclick: () => g.syncEditor(true) }, icon('undo', 14), 'Deshacer'),
         h(
           'button',
           {
@@ -190,7 +191,8 @@ export function sidePanel(g: Game, bot: Bot, tab: 'prog' | 'ficha', onTab: (t: '
               g.toast(`Guardada en la Biblioteca como «${r.name}».`, 'good');
             },
           },
-          '💾 Guardar',
+          icon('save', 14),
+          'Guardar',
         ),
       ),
       h(
@@ -223,7 +225,7 @@ export function sidePanel(g: Game, bot: Bot, tab: 'prog' | 'ficha', onTab: (t: '
     add(body, 
       h('div', { class: 'label' }, 'Rasgos'),
       bot.traits.length
-        ? h('div', { class: 'traits' }, bot.traits.map((t) => h('span', { class: 'trait', title: TRAITS[t].desc }, TRAITS[t].icon, TRAITS[t].name)))
+        ? h('div', { class: 'traits' }, bot.traits.map((t) => h('span', { class: 'trait', title: TRAITS[t].desc }, icon(TRAITS[t].icon, 14), TRAITS[t].name)))
         : h('p', { style: 'color:var(--muted);margin:4px 0' }, 'Sin rasgos todavía. Fusiona este bot con otro de su nivel para que su heredero elija uno.'),
       h(
         'div',
@@ -259,7 +261,8 @@ export function sidePanel(g: Game, bot: Bot, tab: 'prog' | 'ficha', onTab: (t: '
               g.setMode('merge');
             },
           },
-          '🧬 Fusionar con…',
+          icon('merge', 16),
+          'Fusionar con…',
         ),
         h(
           'button',
@@ -270,7 +273,8 @@ export function sidePanel(g: Game, bot: Bot, tab: 'prog' | 'ficha', onTab: (t: '
               g.follow = false;
             },
           },
-          '🎥 Centrar cámara',
+          icon('target', 16),
+          'Centrar cámara',
         ),
       ),
     );
@@ -352,7 +356,8 @@ export function recordingModal(g: Game, routineId: string): void {
                   g.assembleForRoutine(r.id);
                 },
               },
-              `🤖 Ensamblar un bot donde empezaste (${fmt(nextBotCost(g.world))} ✦)`,
+              icon('bot', 16),
+              `Ensamblar un bot donde empezaste (${fmt(nextBotCost(g.world))} ✦)`,
             ),
           )
         : null,
@@ -394,7 +399,8 @@ export function recordingModal(g: Game, routineId: string): void {
                   g.assembleForRoutine(r.id);
                 },
               },
-              `🤖 Ensamblar un bot aquí (${fmt(nextBotCost(g.world))} ✦)`,
+              icon('bot', 16),
+              `Ensamblar un bot aquí (${fmt(nextBotCost(g.world))} ✦)`,
             ),
           ),
     );
@@ -418,7 +424,7 @@ export function libraryModal(g: Game, focus?: string): void {
         h(
           'button',
           { class: r.id === cur ? 'on' : '', onclick: () => ((cur = r.id), render()) },
-          r.lore ? '📜 ' : '',
+          r.lore ? h('span', { class: 'seal', title: 'Archivo del Gremio' }, icon('llamar', 13)) : null,
           r.name,
           h('small', {}, `${r.author} · ${countBlocks(r.blocks)} bloques${r.parent ? ` · fork de «${rn(g)(r.parent)}»` : ''}`),
         ),
@@ -499,7 +505,8 @@ export function libraryModal(g: Game, focus?: string): void {
                 render();
               },
             },
-            '⑂ Forkear',
+            icon('fork', 14),
+            'Forkear',
           ),
           h(
             'button',
@@ -507,7 +514,8 @@ export function libraryModal(g: Game, focus?: string): void {
               class: 'btn small',
               onclick: () => copyText(code, codeBox).then((ok) => g.toast(ok ? 'Código copiado. Compártelo con quien quieras.' : 'Selecciona el código y cópialo a mano.', ok ? 'good' : '')),
             },
-            '⧉ Copiar código',
+            icon('copy', 14),
+            'Copiar código',
           ),
           own
             ? h(
@@ -548,7 +556,7 @@ export function workshopModal(g: Game): void {
         FUSIONS.map((f) => {
           const done = g.world.fusedRecipes.includes(f.id);
           const av = fusionAvailable(g.world, f.id);
-          const chip = (op: keyof typeof OPS, out = false) => h('span', { class: `chip ${out ? 'out' : ''}`, style: `border-left:3px solid ${CAT_COLOR[OPS[op].cat]}` }, OPS[op].icon, OPS[op].label);
+          const chip = (op: keyof typeof OPS, out = false) => h('span', { class: `chip ${out ? 'out' : ''}`, style: `border-left:3px solid ${CAT_COLOR[OPS[op].cat]}` }, icon(OPS[op].icon, 14), OPS[op].label);
           return h(
             'div',
             { class: `card ${done ? 'done' : av.ok ? 'ready' : ''}` },
@@ -796,7 +804,8 @@ export function layersModal(g: Game): void {
                   g.renderToolbar();
                 },
               },
-              '⬇ Descender',
+              icon('descend', 16),
+              'Descender',
             ),
           ),
         );
@@ -860,7 +869,7 @@ export function mergeModal(g: Game, a: Bot, b: Bot): void {
       h('div', { class: 'label' }, '¿Qué código hereda?'),
       h('div', { class: 'cards' }, progCard(a, 'a'), progCard(b, 'b')),
       h('div', { class: 'label' }, 'Rasgos heredados'),
-      inherited.length ? h('div', { class: 'traits' }, inherited.map((t) => h('span', { class: 'trait' }, TRAITS[t].icon, TRAITS[t].name))) : h('span', { style: 'color:var(--muted)' }, 'Ninguno'),
+      inherited.length ? h('div', { class: 'traits' }, inherited.map((t) => h('span', { class: 'trait' }, icon(TRAITS[t].icon, 14), TRAITS[t].name))) : h('span', { style: 'color:var(--muted)' }, 'Ninguno'),
       h('div', { class: 'label' }, 'Elige un rasgo nuevo'),
       h(
         'div',
@@ -869,7 +878,7 @@ export function mergeModal(g: Game, a: Bot, b: Bot): void {
           h(
             'button',
             { class: `card ${trait === t ? 'ready' : ''}`, style: 'text-align:left;cursor:pointer;color:inherit', onclick: () => ((trait = t), render()) },
-            h('b', {}, `${trait === t ? '◉' : '○'} ${TRAITS[t].icon} ${TRAITS[t].name}`),
+            h('b', { class: 'row' }, `${trait === t ? '◉' : '○'}`, icon(TRAITS[t].icon, 16), TRAITS[t].name),
             h('span', { style: 'font-size:12.5px' }, TRAITS[t].desc),
           ),
         ),
@@ -898,7 +907,8 @@ export function mergeModal(g: Game, a: Bot, b: Bot): void {
             g.toast(`Ha nacido ${c.name}, generación ${c.gen}.`, 'good');
           },
         },
-        '🧬 Fusionar',
+        icon('merge', 16),
+        'Fusionar',
       ),
     ],
   });
@@ -915,7 +925,7 @@ export function repairModal(g: Game, key: string): void {
       'div',
       { class: 'stack' },
       h('p', { class: 'diary', style: 'margin:0' }, def.story),
-      h('div', { class: 'traits' }, def.traits.map((t) => h('span', { class: 'trait' }, TRAITS[t].icon, TRAITS[t].name)), h('span', { class: 'trait' }, `nv${def.lvl}`)),
+      h('div', { class: 'traits' }, def.traits.map((t) => h('span', { class: 'trait' }, icon(TRAITS[t].icon, 14), TRAITS[t].name)), h('span', { class: 'trait' }, `nv${def.lvl}`)),
       h('p', { style: 'margin:0' }, `Repararlo cuesta ${fmt(cost)} ✦. El Capataz tiene que estar a su lado.`),
     ),
     footer: [
@@ -1048,7 +1058,7 @@ export function dawnModal(g: Game, r: DawnReport): void {
           'div',
           {},
           h('div', { class: 'label' }, 'Empleados de la noche'),
-          h('div', { class: 'kv', style: 'max-width:380px' }, r.perBot.slice(0, 5).flatMap((p, i) => [h('span', {}, `${['🥇', '🥈', '🥉', '·', '·'][i]} ${p.name}`), h('span', {}, `${fmt(p.earned)} ✦`)])),
+          h('div', { class: 'kv', style: 'max-width:380px' }, r.perBot.slice(0, 5).flatMap((p, i) => [h('span', {}, h('b', { class: 'rank' }, `${i + 1}.`), ` ${p.name}`), h('span', {}, `${fmt(p.earned)} ✦`)])),
         )
       : null,
     h('div', { class: 'label' }, r.incidents.length ? `Incidentes (${r.incidents.length}) · pulsa para ir al bloque exacto` : 'Sin incidentes: una noche perfecta.'),
@@ -1085,7 +1095,8 @@ export function dawnModal(g: Game, r: DawnReport): void {
                 g.startReplay(r, true, () => dawnModal(g, r));
               },
             },
-            '🎬 Timelapse + clip',
+            icon('film', 16),
+            'Timelapse + clip',
           )
         : h('span'),
       h(
@@ -1097,7 +1108,8 @@ export function dawnModal(g: Game, r: DawnReport): void {
             g.startReplay(r, false, () => dawnModal(g, r));
           },
         },
-        '🌙 Ver timelapse',
+        icon('moon', 16),
+        'Ver timelapse',
       ),
       h('button', { class: 'btn primary', onclick: () => modal?.close() }, 'Al trabajo'),
     ],
@@ -1187,7 +1199,8 @@ export function challengeModal(g: Game): void {
             runVisual(g, def, programs(), finish);
           },
         },
-        '▶ Ejecutar en 3D',
+        icon('play', 14),
+        'Ejecutar en 3D',
       ),
     ],
   });
@@ -1199,7 +1212,7 @@ function runVisual(g: Game, def: ChallengeDef, progs: Block[][], finish: (r: { s
   g.setHudVisible(false, false);
   const l = w.layers[0];
   g.renderer.focus(l.elevator[0] + 2, l.elevator[1], true);
-  const bar = h('div', { class: 'recbar plate', style: 'border-color:var(--lamp-dim)' }, h('span', {}, '🏆'), h('b', {}, 'Desafío'), h('span', { class: 'num' }, 'tick 0'), h('button', { class: 'btn small', onclick: () => end() }, 'Salir'));
+  const bar = h('div', { class: 'recbar plate', style: 'border-color:var(--lamp-dim)' }, icon('challenge', 18), h('b', {}, 'Desafío'), h('span', { class: 'num' }, 'tick 0'), h('button', { class: 'btn small', onclick: () => end() }, 'Salir'));
   g.ui.appendChild(bar);
   const timer = window.setInterval(() => {
     (bar.children[2] as HTMLElement).textContent = `tick ${w.tick}`;

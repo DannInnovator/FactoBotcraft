@@ -1,4 +1,5 @@
 // Pequeñas utilidades de DOM sin framework.
+import { icon } from './icons';
 type Child = Node | string | number | null | undefined | false | Child[];
 type Attrs = Record<string, unknown> & { class?: string; style?: string };
 
@@ -76,7 +77,7 @@ export class Modals {
     const modal = h(
       'div',
       { class: `modal plate brass ${o.cls ?? ''}`, role: 'dialog', 'aria-modal': 'true', 'aria-label': o.title },
-      h('header', {}, h('h2', {}, o.title), closable ? h('button', { class: 'btn ghost small x', onclick: close, 'aria-label': 'Cerrar' }, '✕') : null),
+      h('header', {}, h('h2', {}, o.title), closable ? h('button', { class: 'btn ghost small x', onclick: close, 'aria-label': 'Cerrar' }, icon('close', 16)) : null),
       h('div', { class: 'body' }, o.body),
       o.footer?.length ? h('footer', {}, o.footer) : null,
     );

@@ -17,6 +17,7 @@ import {
   makeElevator,
   makeForge,
   makeGem,
+  botSig,
   makeGlitch,
   makeLantern,
   setMood,
@@ -668,12 +669,12 @@ export class Renderer {
     for (const b of bots) {
       seenBots.add(b.id);
       let m = this.botModels.get(b.id);
-      if (m && (m.lvl !== b.lvl)) {
+      if (m && m.sig !== botSig(b.lvl, b.traits)) {
         this.dynGroup.remove(m.root);
         m = undefined;
       }
       if (!m) {
-        m = makeBot(b.lvl, !!b.captain);
+        m = makeBot(b.lvl, !!b.captain, false, b.traits);
         this.botModels.set(b.id, m);
         this.dynGroup.add(m.root);
         m.root.position.set(b.x, 0, b.y);
@@ -726,6 +727,8 @@ export class Renderer {
         hm.rotation.y = t * 2;
         hm.position.y = Math.sin(t * 3) * 0.04;
       }
+      const halo = m.body.getObjectByName('halo');
+      if (halo) halo.rotation.z = t * 1.5;
       if (m.lamp) m.lamp.intensity = def.dark || o.night ? 9 : 4;
     }
     for (const [id, m] of this.botModels) {

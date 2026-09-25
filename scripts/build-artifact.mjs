@@ -5,6 +5,8 @@ import { execSync } from 'node:child_process';
 import { readFileSync, readdirSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
+// Favicon: el emblema, generado desde src/ui/icons.ts en tiempo de build
+const FAVICON = execSync('npx vite-node scripts/favicon.ts', { encoding: 'utf8' }).trim();
 const THREE = JSON.parse(readFileSync('node_modules/three/package.json', 'utf8')).version;
 execSync('npx vite build --mode artifact', { stdio: 'inherit' });
 const dir = 'dist-artifact/assets';
@@ -15,6 +17,7 @@ if (js.length !== 1) throw new Error(`Se esperaba un único bundle JS y hay ${js
 const cdn = `https://cdn.jsdelivr.net/npm/three@${THREE}`;
 const safeJs = js[0].replace(/<\/script/gi, '<\\/script');
 const html = `<title>Konstrukta</title>
+<link rel="icon" href="${FAVICON}">
 <meta name="description" content="Juega una vez. Tus bots juegan para siempre.">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&family=Lilita+One&display=swap">
 <style>${css.join('\n')}</style>

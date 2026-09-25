@@ -54,20 +54,20 @@ export function recipeFor(a: Item, b: Item): Item | null {
 
 export interface TraitDef {
   name: string;
-  icon: string;
+  icon: string; // nombre en src/ui/icons.ts
   desc: string;
 }
 
 export const TRAITS: Record<TraitId, TraitDef> = {
-  veloz: { name: 'Veloz', icon: '⚡', desc: 'Se mueve y trabaja un 30 % más rápido.' },
-  minero: { name: 'Minero nato', icon: '⛏', desc: 'Pica y excava en la mitad de tiempo.' },
-  meticuloso: { name: 'Meticuloso', icon: '🔍', desc: '1 de cada 6 fusiones salta un nivel extra.' },
-  madrugador: { name: 'Madrugador', icon: '🌙', desc: 'Durante el Turno de Noche rinde un 60 % más.' },
-  blindado: { name: 'Blindado', icon: '🛡', desc: 'Los Glitchlings no pueden corromper su código.' },
-  refractario: { name: 'Refractario', icon: '🔥', desc: 'Camina sobre lava sin sobrecalentarse.' },
-  farolero: { name: 'Farolero', icon: '💡', desc: 'Lleva luz: ahuyenta Glitchlings y ve vetas en la oscuridad.' },
-  coleccionista: { name: 'Coleccionista', icon: '💰', desc: 'Obtiene un 25 % más de Lumen al vender.' },
-  memorioso: { name: 'Memorioso', icon: '🧠', desc: '+6 bloques de memoria.' },
+  veloz: { name: 'Veloz', icon: 'veloz', desc: 'Se mueve y trabaja un 30 % más rápido.' },
+  minero: { name: 'Minero nato', icon: 'minero', desc: 'Pica y excava en la mitad de tiempo.' },
+  meticuloso: { name: 'Meticuloso', icon: 'meticuloso', desc: '1 de cada 6 fusiones salta un nivel extra.' },
+  madrugador: { name: 'Madrugador', icon: 'madrugador', desc: 'Durante el Turno de Noche rinde un 60 % más.' },
+  blindado: { name: 'Blindado', icon: 'blindado', desc: 'Los Glitchlings no pueden corromper su código.' },
+  refractario: { name: 'Refractario', icon: 'refractario', desc: 'Camina sobre lava sin sobrecalentarse.' },
+  farolero: { name: 'Farolero', icon: 'farolero', desc: 'Lleva luz: ahuyenta Glitchlings y ve vetas en la oscuridad.' },
+  coleccionista: { name: 'Coleccionista', icon: 'coleccionista', desc: 'Obtiene un 25 % más de Lumen al vender.' },
+  memorioso: { name: 'Memorioso', icon: 'memorioso', desc: '+6 bloques de memoria.' },
 };
 
 export const TRAIT_IDS = Object.keys(TRAITS) as TraitId[];
@@ -193,7 +193,7 @@ export const FINALE_REQ: Item = { kind: 'nucleita', lvl: 6 };
 
 export interface OpDef {
   label: string;
-  icon: string;
+  icon: string; // nombre en src/ui/icons.ts
   desc: string;
   container?: boolean;
   params?: ('dir' | 'n' | 'cond' | 'beacon' | 'color' | 'routine' | 'text')[];
@@ -201,29 +201,29 @@ export interface OpDef {
 }
 
 export const OPS: Record<Op, OpDef> = {
-  mover: { label: 'mover', icon: '➜', desc: 'Avanza una casilla en la dirección indicada.', params: ['dir'], cat: 'accion' },
-  picar: { label: 'picar', icon: '⛏', desc: 'Pica una veta (mineral a la mano) o excava una pared.', params: ['dir'], cat: 'accion' },
-  recoger: { label: 'recoger', icon: '✋', desc: 'Toma el mineral de la casilla actual.', cat: 'accion' },
+  mover: { label: 'mover', icon: 'mover', desc: 'Avanza una casilla en la dirección indicada.', params: ['dir'], cat: 'accion' },
+  picar: { label: 'picar', icon: 'picar', desc: 'Pica una veta (mineral a la mano) o excava una pared.', params: ['dir'], cat: 'accion' },
+  recoger: { label: 'recoger', icon: 'recoger', desc: 'Toma el mineral de la casilla actual.', cat: 'accion' },
   soltar: {
     label: 'soltar',
-    icon: '⬇',
+    icon: 'soltar',
     desc: 'Deja el mineral. Sobre uno igual: ¡fusión! En el montacargas: se vende.',
     cat: 'accion',
   },
-  esperar: { label: 'esperar', icon: '⏳', desc: 'Espera N ticks (10 ticks = 1 s).', params: ['n'], cat: 'control' },
-  repetir: { label: 'repetir', icon: '🔁', desc: 'Repite N veces los bloques de dentro.', container: true, params: ['n'], cat: 'control' },
-  si: { label: 'si', icon: '❓', desc: 'Ejecuta lo de dentro solo si se cumple la condición.', container: true, params: ['cond'], cat: 'control' },
-  avanzar: { label: 'avanzar hasta', icon: '⏩', desc: 'Avanza hasta chocar con algo.', params: ['dir'], cat: 'accion' },
-  picarAlrededor: { label: 'picar alrededor', icon: '✴', desc: 'Pica la primera veta lista que tenga al lado.', cat: 'accion' },
-  sisino: { label: 'si / si no', icon: '⑂', desc: 'Una rama si se cumple, otra si no.', container: true, params: ['cond'], cat: 'control' },
-  mientras: { label: 'mientras', icon: '♾', desc: 'Repite mientras se cumpla la condición.', container: true, params: ['cond'], cat: 'control' },
-  irA: { label: 'ir a baliza', icon: '🚩', desc: 'Camina (esquivando paredes) hasta la baliza.', params: ['beacon'], cat: 'logistica' },
-  emitir: { label: 'emitir señal', icon: '📡', desc: 'Emite una señal de color (otro bot puede esperarla).', params: ['color'], cat: 'señal' },
-  esperarSenal: { label: 'esperar señal', icon: '📶', desc: 'Espera hasta recibir una señal de ese color y la consume.', params: ['color'], cat: 'señal' },
-  llamar: { label: 'rutina', icon: '📜', desc: 'Ejecuta una rutina guardada en tu Biblioteca.', params: ['routine'], cat: 'control' },
-  restaurar: { label: 'restaurar código', icon: '🩹', desc: 'Si un Glitchling alteró el programa, lo repara.', cat: 'otro' },
-  irAPar: { label: 'llevar a su par', icon: '💞', desc: 'Lleva el mineral de la mano hasta uno igual y lo fusiona.', cat: 'logistica' },
-  nota: { label: 'nota', icon: '✎', desc: 'Un comentario. No hace nada, pero cuenta historias.', params: ['text'], cat: 'otro' },
+  esperar: { label: 'esperar', icon: 'esperar', desc: 'Espera N ticks (10 ticks = 1 s).', params: ['n'], cat: 'control' },
+  repetir: { label: 'repetir', icon: 'repetir', desc: 'Repite N veces los bloques de dentro.', container: true, params: ['n'], cat: 'control' },
+  si: { label: 'si', icon: 'si', desc: 'Ejecuta lo de dentro solo si se cumple la condición.', container: true, params: ['cond'], cat: 'control' },
+  avanzar: { label: 'avanzar hasta', icon: 'avanzar', desc: 'Avanza hasta chocar con algo.', params: ['dir'], cat: 'accion' },
+  picarAlrededor: { label: 'picar alrededor', icon: 'picarAlrededor', desc: 'Pica la primera veta lista que tenga al lado.', cat: 'accion' },
+  sisino: { label: 'si / si no', icon: 'sisino', desc: 'Una rama si se cumple, otra si no.', container: true, params: ['cond'], cat: 'control' },
+  mientras: { label: 'mientras', icon: 'mientras', desc: 'Repite mientras se cumpla la condición.', container: true, params: ['cond'], cat: 'control' },
+  irA: { label: 'ir a baliza', icon: 'irA', desc: 'Camina (esquivando paredes) hasta la baliza.', params: ['beacon'], cat: 'logistica' },
+  emitir: { label: 'emitir señal', icon: 'emitir', desc: 'Emite una señal de color (otro bot puede esperarla).', params: ['color'], cat: 'señal' },
+  esperarSenal: { label: 'esperar señal', icon: 'esperarSenal', desc: 'Espera hasta recibir una señal de ese color y la consume.', params: ['color'], cat: 'señal' },
+  llamar: { label: 'rutina', icon: 'llamar', desc: 'Ejecuta una rutina guardada en tu Biblioteca.', params: ['routine'], cat: 'control' },
+  restaurar: { label: 'restaurar código', icon: 'restaurar', desc: 'Si un Glitchling alteró el programa, lo repara.', cat: 'otro' },
+  irAPar: { label: 'llevar a su par', icon: 'irAPar', desc: 'Lleva el mineral de la mano hasta uno igual y lo fusiona.', cat: 'logistica' },
+  nota: { label: 'nota', icon: 'nota', desc: 'Un comentario. No hace nada, pero cuenta historias.', params: ['text'], cat: 'otro' },
 };
 
 export const BASE_OPS: Op[] = ['mover', 'picar', 'recoger', 'soltar', 'esperar', 'nota'];

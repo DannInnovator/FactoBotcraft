@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { ORES } from '../sim/content';
-import type { Item, OreKind } from '../sim/types';
+import type { Item, OreKind, TraitId } from '../sim/types';
 
 export const LEVEL_COLORS = [0xe8d9c0, 0xe8d9c0, 0x6fd6c4, 0xe39a52, 0x7fa8e8, 0xb48cf2, 0xffcf5a];
 
@@ -175,13 +175,14 @@ export interface BotModel {
   handKey: string;
   mood: Mood;
   lvl: number;
+  sig: string;
   lamp?: THREE.SpotLight;
 }
 
 const bodyGeo = new RoundedBoxGeometry(0.6, 0.46, 0.5, 3, 0.12);
 const trackGeo = new RoundedBoxGeometry(0.16, 0.16, 0.56, 2, 0.06);
 
-export function makeBot(lvl: number, captain = false, broken = false): BotModel {
+export function makeBot(lvl: number, captain = false, broken = false, traits: TraitId[] = []): BotModel {
   const root = new THREE.Group();
   const body = new THREE.Group();
   root.add(body);
@@ -244,10 +245,95 @@ export function makeBot(lvl: number, captain = false, broken = false): BotModel 
   const handSlot = new THREE.Object3D();
   handSlot.position.set(0, 1.0, 0);
   root.add(handSlot);
+  if (!captain && !broken) addUpgrades(body, lvl, traits, tipColor);
   const s = broken ? 0.9 : captain ? 1.08 : 0.82 + Math.min(lvl, 6) * 0.05;
   root.scale.setScalar(s);
   if (broken) body.rotation.z = 0.35;
-  return { root, body, face, arm, antennaTip, handSlot, handKey: '', mood: broken ? 'off' : 'idle', lvl, lamp };
+  return { root, body, face, arm, antennaTip, handSlot, handKey: '', mood: broken ? 'off' : 'idle', lvl, sig: botSig(lvl, traits), lamp };
+}
+
+export function botSig(lvl: number, traits: TraitId[]): string {
+  return `${lvl}:${[...traits].sort().join(',')}`;
+}
+
+/** Silueta por nivel y un accesorio visible por rasgo (docs/STYLE.md §5). */
+function addUpgrades(body: THREE.Group, lvl: number, traits: TraitId[], tip: number): void {
+  const brass = std(0xc9a063, { metalness: 0.6, roughness: 0.35 });
+  const add = (m: THREE.Mesh, x: number, y: number, z: number) => {
+    m.position.set(x, y, z);
+    m.castShadow = true;
+    body.add(m);
+    return m;
+  };
+  // Nivel 2+: remaches de latón en los hombros
+  if (lvl >= 2) for (const x of [-0.3, 0.3]) add(new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), brass), x, 0.56, 0.12);
+  // Nivel 3+: depósito a la espalda
+  if (lvl >= 3) {
+    const tank = add(new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.34, 10), brass), 0, 0.4, -0.3);
+    tank.rotation.z = Math.PI / 2;
+  }
+  // Nivel 4+: cúpula de cristal con la luz del nivel
+  if (lvl >= 4) {
+    const dome = add(
+      new THREE.Mesh(new THREE.SphereGeometry(0.17, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: tip, emissive: tip, emissiveIntensity: 0.5, transparent: true, opacity: 0.55, roughness: 0.1 })),
+      0.08,
+      0.6,
+      -0.02,
+    );
+    dome.castShadow = false;
+  }
+  // Nivel 5+: faros laterales
+  if (lvl >= 5) for (const x of [-0.31, 0.31]) add(new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 6), glowMat(tip, 2.4)), x, 0.3, 0.2);
+  // Nivel 6: aro dorado flotante
+  if (lvl >= 6) {
+    const halo = add(new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.018, 6, 32), glowMat(0xffcf5a, 2)), 0, 0.95, 0);
+    halo.rotation.x = Math.PI / 2;
+    halo.name = 'halo';
+  }
+  for (const t of traits) {
+    switch (t) {
+      case 'farolero': {
+        const l = add(new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.12, 0.1), glowMat(0xffc46b, 3)), 0.18, 0.66, 0.1);
+        l.castShadow = false;
+        break;
+      }
+      case 'blindado':
+        add(new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.05), std(0x8a96a8, { metalness: 0.7, roughness: 0.3 })), 0, 0.17, 0.28);
+        break;
+      case 'refractario':
+        add(new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.05, 0.52), glowMat(0xff7a3d, 0.9)), 0, 0.2, 0);
+        break;
+      case 'veloz':
+        for (const x of [-0.14, 0.14]) {
+          const fin = add(new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.24, 4), std(0x6fe3d6)), x, 0.55, -0.26);
+          fin.rotation.x = -0.9;
+        }
+        break;
+      case 'coleccionista': {
+        const coin = add(new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.02, 12), glowMat(0xffc94a, 1.4)), -0.2, 0.2, 0.26);
+        coin.rotation.x = Math.PI / 2;
+        break;
+      }
+      case 'memorioso':
+        add(new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.04), glowMat(0x6fe3d6, 1.2)), -0.12, 0.42, -0.27);
+        break;
+      case 'meticuloso': {
+        const ring = add(new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.012, 6, 16), brass), 0.1, 0.4, 0.27);
+        ring.castShadow = false;
+        break;
+      }
+      case 'madrugador': {
+        const moon = add(new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.02, 6, 16, Math.PI * 1.3), glowMat(0xbfc8ff, 1.5)), -0.3, 0.45, 0);
+        moon.rotation.y = Math.PI / 2;
+        break;
+      }
+      case 'minero':
+        body.children.forEach((c) => {
+          if (c instanceof THREE.Group) c.scale.setScalar(1.3); // pico más grande
+        });
+        break;
+    }
+  }
 }
 
 export function setMood(m: BotModel, mood: Mood): void {

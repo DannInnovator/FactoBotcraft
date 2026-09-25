@@ -26,6 +26,7 @@ import { DELTA, type Block, type Bot, type Dir, type Layer, type Op, type SimEve
 import { createWorld, isWalkable, makeBot as makeSimBot, setProgram, tileAt } from './sim/world';
 import { Modals, add, fmt, h } from './ui/dom';
 import { ProgramEditor } from './ui/editor';
+import { EMBLEM, FAVICON, icon } from './ui/icons';
 import * as P from './ui/panels';
 
 export type Mode = 'normal' | 'bot' | 'lamp' | 'forge' | 'beacon' | 'merge';
@@ -75,6 +76,7 @@ export class Game {
 
   constructor(canvas: HTMLCanvasElement, ui: HTMLElement) {
     this.ui = ui;
+    if (!document.querySelector('link[rel=icon]')) document.head.appendChild(h('link', { rel: 'icon', href: FAVICON }));
     this.renderer = new Renderer(canvas);
     this.modals = new Modals(ui);
     this.renderer.setQuality((getPref('quality', 'alta') as 'alta' | 'media' | 'baja') ?? 'alta');
@@ -257,7 +259,7 @@ export class Game {
       if (cond && !w.codex.includes(id)) {
         w.codex.push(id);
         const e = CODEX.find((c) => c.id === id);
-        if (e) this.toast(`📖 Nueva entrada en el Códex: ${e.title}`, '', () => P.codexModal(this, 'codex', id));
+        if (e) this.toast(`Nueva entrada en el Códex: ${e.title}`, '', () => P.codexModal(this, 'codex', id));
       }
     };
     unlock('alba', w.stats.sold > 0);
@@ -361,7 +363,7 @@ export class Game {
     const d = DIARY[page];
     if (d?.codex && !w.codex.includes(d.codex)) w.codex.push(d.codex);
     this.audio.capsule();
-    this.toast('💾 Cápsula de datos recuperada (+1 ◆). Pulsa para leer.', 'good', () => P.codexModal(this, 'diary', page));
+    this.toast('Cápsula de datos recuperada (+1 ◆). Pulsa para leer.', 'good', () => P.codexModal(this, 'diary', page));
     if (w.diary.length === 1) this.say('¡Una cápsula de datos! Es la letra de Mireya, la Ingeniera Jefe. Léela cuando puedas: la encontrarás en el Códex.');
   }
 
@@ -552,7 +554,7 @@ export class Game {
         document.body.appendChild(a);
         a.click();
         a.remove();
-        this.toast('🎬 Clip guardado como vídeo .webm', 'good');
+        this.toast('Clip guardado como vídeo .webm', 'good');
       };
       r.recorder.stop();
     }
@@ -569,7 +571,7 @@ export class Game {
       this.el.replayInfo = h(
         'div',
         { class: 'recbar plate', style: 'border-color:#3e6a66' },
-        h('span', {}, '🌙'),
+        icon('moon', 18),
         h('b', {}, 'Turno de Noche'),
         (this.el.replayPct = h('span', { class: 'num' }, '0 %')),
         h('button', { class: 'btn small', onclick: () => this.endReplay() }, 'Saltar'),
@@ -960,7 +962,7 @@ export class Game {
         h('span', { class: 'dotrec' }),
         h('b', {}, 'Grabando'),
         h('code', {}, 'haz el trabajo con el Capataz…'),
-        h('button', { class: 'btn small', onclick: () => this.toggleRecord() }, '⏹ Detener'),
+        h('button', { class: 'btn small', onclick: () => this.toggleRecord() }, icon('stop', 14), 'Detener'),
       );
       this.ui.appendChild(this.el.recbar);
       this.renderToolbar();
@@ -1056,15 +1058,15 @@ export class Game {
   // ---------- HUD ----------
   private buildHud(): void {
     this.ui.querySelectorAll('.hud,.orders,.toolbar,.toasts,.compass,.touchpad,.touchact').forEach((e) => e.remove());
-    const g = (cls: string, label: string, id: string, bar = false) =>
-      h('div', { class: `gauge plate ${cls}` }, h('span', { class: 'label' }, label), (this.el[id] = h('span', { class: 'v' }, '0')), bar ? h('div', { class: 'bar' }, (this.el[id + 'Bar'] = h('i', { style: 'width:0%' }))) : null);
+    const g = (cls: string, label: string, id: string, bar = false, ic = '') =>
+      h('div', { class: `gauge plate ${cls}` }, h('span', { class: 'label' }, ic ? icon(ic, 12) : null, label), (this.el[id] = h('span', { class: 'v' }, '0')), bar ? h('div', { class: 'bar' }, (this.el[id + 'Bar'] = h('i', { style: 'width:0%' }))) : null);
     this.el.hud = h(
       'div',
       { class: 'hud' },
-      h('div', { class: 'brand plate' }, h('h1', {}, 'Konstrukta')),
-      g('lumen', 'Lumen ✦', 'lumen'),
-      g('frag', 'Estática ◆', 'frags'),
-      g('alba', 'Ventanas de Alba', 'alba', true),
+      h('div', { class: 'brand plate' }, h('span', { class: 'brand-emblem', html: EMBLEM }), h('h1', {}, 'Konstrukta')),
+      g('lumen', 'Lumen', 'lumen', false, 'lumen'),
+      g('frag', 'Estática', 'frags', false, 'fragment'),
+      g('alba', 'Ventanas de Alba', 'alba', true, 'alba'),
       (this.el.layerBox = h(
         'div',
         { class: 'layerbox plate', role: 'button', tabindex: '0', title: 'Capas de Konstrukta', onclick: () => P.layersModal(this) },
@@ -1076,16 +1078,16 @@ export class Game {
       h(
         'div',
         { class: 'controls plate' },
-        (this.el.pause = h('button', { class: 'btn', title: 'Pausa (P)', 'aria-label': 'Pausa', onclick: () => this.togglePause() }, '⏸')),
+        (this.el.pause = h('button', { class: 'btn', title: 'Pausa (P)', 'aria-label': 'Pausa', onclick: () => this.togglePause() }, icon('pause', 16))),
         (this.el.s1 = h('button', { class: 'btn', title: 'Velocidad normal', onclick: () => ((this.speed = 1), this.updateHud(true)) }, '1×')),
         (this.el.s3 = h('button', { class: 'btn', title: 'Velocidad ×3', onclick: () => ((this.speed = 3), this.updateHud(true)) }, '3×')),
-        h('button', { class: 'btn', title: 'Ajustes', 'aria-label': 'Ajustes', onclick: () => P.settingsModal(this) }, '⚙'),
+        h('button', { class: 'btn', title: 'Ajustes', 'aria-label': 'Ajustes', onclick: () => P.settingsModal(this) }, icon('settings', 17)),
       ),
     );
     this.el.orders = h('div', { class: `orders plate ${window.innerWidth < 760 ? 'min' : ''}` });
     this.el.toasts = h('div', { class: 'toasts', 'aria-live': 'polite' });
     this.el.toolbar = h('div', { class: 'toolbar plate', role: 'toolbar', 'aria-label': 'Herramientas' });
-    this.el.compass = h('div', { class: 'compass plate', title: 'Girar cámara (Q)', role: 'button', tabindex: '0', onclick: () => this.rotateCam(1) }, h('span', {}, 'N'));
+    this.el.compass = h('div', { class: 'compass plate', title: 'Girar cámara (Q)', role: 'button', tabindex: '0', onclick: () => this.rotateCam(1) }, h('span', {}, icon('compass', 26)));
     this.ui.append(this.el.hud, this.el.orders, this.el.toasts, this.el.toolbar, this.el.compass);
     if (window.matchMedia('(pointer: coarse)').matches) {
       const dirBtn = (cls: string, d: Dir, label: string) =>
@@ -1110,27 +1112,27 @@ export class Game {
     if (sig === this.toolbarSig && tb.childElementCount) return;
     this.toolbarSig = sig;
     tb.innerHTML = '';
-    const tool = (icon: string, title: string, cost: string | null, on: boolean, fn: () => void, extra = '', locked = false) =>
+    const tool = (iconName: string, title: string, cost: string | null, on: boolean, fn: () => void, extra = '', locked = false) =>
       tb.appendChild(
         h(
           'button',
           { class: `tool ${on ? 'on' : ''} ${extra} ${locked ? 'locked' : ''}`, title, onclick: () => (this.audio.start(), this.audio.click(), fn()) },
-          h('span', { class: 'i' }, icon),
+          h('span', { class: 'i' }, icon(iconName, 22)),
           h('span', { class: 't' }, title),
           cost ? h('span', { class: 'c' }, cost) : null,
         ),
       );
-    tool(this.recording ? '⏹' : '⏺', this.recording ? 'Detener' : 'Grabar', 'R', !!this.recording, () => this.toggleRecord(), 'rec');
-    tool('🤖', 'Bot', `${fmt(nextBotCost(w))} ✦`, this.mode === 'bot', () => this.setMode(this.mode === 'bot' ? 'normal' : 'bot'));
-    tool('💡', 'Lámpara', `${LAMP_COST} ✦`, this.mode === 'lamp', () => this.setMode(this.mode === 'lamp' ? 'normal' : 'lamp'));
-    if (w.layers.length >= 2) tool('🔥', 'Forja', `${FORGE_COST} ✦`, this.mode === 'forge', () => this.setMode(this.mode === 'forge' ? 'normal' : 'forge'));
-    if (w.unlockedOps.includes('irA')) tool('🚩', 'Baliza', null, this.mode === 'beacon', () => P.beaconPicker(this));
-    tool('🛠', 'Taller', null, false, () => P.workshopModal(this));
-    tool('📚', 'Biblioteca', null, false, () => P.libraryModal(this));
-    tool('📖', 'Códex', null, false, () => P.codexModal(this, 'codex'));
-    tool('🏆', 'Desafío', null, false, () => P.challengeModal(this));
+    tool(this.recording ? 'stop' : 'rec', this.recording ? 'Detener' : 'Grabar', 'R', !!this.recording, () => this.toggleRecord(), 'rec');
+    tool('bot', 'Bot', `${fmt(nextBotCost(w))} ✦`, this.mode === 'bot', () => this.setMode(this.mode === 'bot' ? 'normal' : 'bot'));
+    tool('lamp', 'Lámpara', `${LAMP_COST} ✦`, this.mode === 'lamp', () => this.setMode(this.mode === 'lamp' ? 'normal' : 'lamp'));
+    if (w.layers.length >= 2) tool('forge', 'Forja', `${FORGE_COST} ✦`, this.mode === 'forge', () => this.setMode(this.mode === 'forge' ? 'normal' : 'forge'));
+    if (w.unlockedOps.includes('irA')) tool('beacon', 'Baliza', null, this.mode === 'beacon', () => P.beaconPicker(this));
+    tool('workshop', 'Taller', null, false, () => P.workshopModal(this));
+    tool('library', 'Biblioteca', null, false, () => P.libraryModal(this));
+    tool('codex', 'Códex', null, false, () => P.codexModal(this, 'codex'));
+    tool('challenge', 'Desafío', null, false, () => P.challengeModal(this));
     const c = canDescend(w);
-    if (w.layers.length < LAYERS.length) tool('⬇', 'Descender', null, false, () => P.layersModal(this), c.ok ? 'ready' : '', !c.ok);
+    if (w.layers.length < LAYERS.length) tool('descend', 'Descender', null, false, () => P.layersModal(this), c.ok ? 'ready' : '', !c.ok);
   }
 
   renderOrders(): void {
@@ -1171,7 +1173,7 @@ export class Game {
     this.el.dial.style.background = `conic-gradient(#6a4a2a 0 ${(NIGHT_START / DAY_TICKS) * 100}%, #2a3c6a 0 100%)`;
     this.el.clockTxt.textContent = isNight(w) ? 'Noche' : 'Día';
     if (force) {
-      this.el.pause.textContent = this.paused ? '▶' : '⏸';
+      this.el.pause.replaceChildren(icon(this.paused ? 'play' : 'pause', 16));
       this.el.pause.classList.toggle('active', this.paused);
       this.el.s1.classList.toggle('active', this.speed === 1 && !this.paused);
       this.el.s3.classList.toggle('active', this.speed === 3 && !this.paused);

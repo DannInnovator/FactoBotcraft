@@ -4,6 +4,7 @@ import { COND_LABEL, OPS, type OpDef } from '../sim/content';
 import { countBlocks, mk } from '../sim/program';
 import { COLORS, DIR_ARROW, type Block, type CondKind, type Dir, type Op, type Routine } from '../sim/types';
 import { h } from './dom';
+import { icon } from './icons';
 
 export const CAT_COLOR: Record<OpDef['cat'], string> = {
   accion: '#6fe3d6',
@@ -70,7 +71,7 @@ export class ProgramEditor {
         h(
           'div',
           { class: 'empty-code' },
-          'Programa vacío. Añade instrucciones desde la paleta de abajo, o usa ⏺ Grabar para convertir lo que haces con el Capataz en código.',
+          'Programa vacío. Añade instrucciones desde la paleta de abajo, o usa Grabar (R) para convertir lo que haces con el Capataz en código.',
         ),
       );
     }
@@ -86,7 +87,7 @@ export class ProgramEditor {
             title: def.desc,
             onclick: () => this.insert(op),
           },
-          h('span', {}, def.icon),
+          icon(def.icon, 15),
           def.label,
         ),
       );
@@ -131,7 +132,7 @@ export class ProgramEditor {
   private renderBlock(b: Block, list: Block[], i: number): HTMLElement {
     const def = OPS[b.op];
     const row = h('div', { class: `blk ${b.corrupt ? 'corrupt' : ''}`, style: `--cat:${CAT_COLOR[def.cat]}`, role: 'listitem' });
-    row.append(h('span', { class: 'ic' }, def.icon), h('span', { class: 'nm' }, def.label));
+    row.append(h('span', { class: 'ic' }, icon(def.icon, 15)), h('span', { class: 'nm' }, def.label));
     const set = () => {
       delete b.corrupt;
       this.changed();
@@ -187,8 +188,8 @@ export class ProgramEditor {
         { class: 'tools' },
         h('button', { title: 'Subir', 'aria-label': 'Subir', onclick: () => this.move(list, i, -1) }, '↑'),
         h('button', { title: 'Bajar', 'aria-label': 'Bajar', onclick: () => this.move(list, i, 1) }, '↓'),
-        h('button', { title: 'Duplicar', 'aria-label': 'Duplicar', onclick: () => this.dup(list, i) }, '⧉'),
-        h('button', { title: 'Borrar', 'aria-label': 'Borrar', onclick: () => this.remove(list, i) }, '✕'),
+        h('button', { title: 'Duplicar', 'aria-label': 'Duplicar', onclick: () => this.dup(list, i) }, icon('copy', 13)),
+        h('button', { title: 'Borrar', 'aria-label': 'Borrar', onclick: () => this.remove(list, i) }, icon('close', 13)),
       ),
     );
     this.blockEls.set(b.id, row);
