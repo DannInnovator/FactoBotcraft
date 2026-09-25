@@ -42,6 +42,10 @@ async function call(url, body, tries = 4) {
     const res = await fetch(url, body ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) } : {});
     if (res.ok) return res.json();
     const text = await res.text();
+    // Cuota del nivel gratuito a 0: reintentar no sirve, hace falta facturación
+    if (res.status === 429 && /free_tier[^\n]*limit: 0/.test(text)) {
+      throw new Error('la clave está en el nivel gratuito, que no incluye modelos de imagen (cuota 0). Activa la facturación del proyecto en Google AI Studio (https://aistudio.google.com/apikey).');
+    }
     if (res.status === 429 || res.status >= 500) {
       const wait = 2000 * 2 ** i;
       console.warn(`  · ${res.status}, reintento en ${wait / 1000} s`);
@@ -155,6 +159,10 @@ for (const p of todo) {
     } catch (e) {
       console.log(`FALLO: ${e.message}`);
       bad++;
+      if (/nivel gratuito/.test(e.message)) {
+        review();
+        process.exit(1);
+      }
     }
   }
 }
