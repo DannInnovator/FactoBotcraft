@@ -11,7 +11,7 @@ Referencias: *Craftomation 101* (programar bots), *Factorio* (cadenas de producc
 - 🎮 **[Jugar en el navegador](https://claude.ai/artifact/7uvEEsNdTZR4SbgkCmTTUG)** (página privada: compártela desde su menú)
 - 📄 [Documento de diseño (GDD)](docs/GDD.md)
 - 📖 [Biblia del universo (lore)](docs/LORE.md)
-- 🎨 [Biblia de estilo visual](docs/STYLE.md) · [Encargos de arte](docs/ART_BRIEFS.md) · [Guía visual para artistas](https://claude.ai/artifact/2UzdEjR1BY5WjzdZYVN5pL)
+- 🎨 [Biblia de estilo visual](docs/STYLE.md) · [Encargos de arte](docs/ART_BRIEFS.md) · [Prompts para Gemini](docs/PROMPTS_GEMINI.md) · [Guía visual para artistas](https://claude.ai/artifact/2UzdEjR1BY5WjzdZYVN5pL)
 
 ## Cómo se juega
 
