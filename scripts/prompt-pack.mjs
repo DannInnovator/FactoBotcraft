@@ -207,6 +207,11 @@ for (const g of GROUPS) {
   }
 }
 writeFileSync('docs/PROMPTS_GEMINI.md', md);
+// Datos para el generador automático (scripts/gen-art.mjs)
+writeFileSync(
+  'docs/prompts.json',
+  JSON.stringify(GROUPS.flatMap((g) => g.items.map((it) => ({ id: it.id, name: it.name, ratio: it.ratio, ref: it.ref, where: it.where, prompt: it.prompt }))), null, 2) + '\n',
+);
 
 // ---------- Página ----------
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');

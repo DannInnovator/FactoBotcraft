@@ -1,0 +1,226 @@
+[
+  {
+    "id": "keyart_master",
+    "name": "Ilustración maestra",
+    "ratio": "16:9 (lo más grande posible)",
+    "ref": "Ninguna: esta es la referencia de todo lo demás",
+    "where": "Pantalla de título, portada y base de las cápsulas de Steam",
+    "prompt": "Cozy low-poly diorama illustration of an underground mine, cut-away view like a miniature model, warm lantern light glowing in deep darkness, palette: deep plum black #17121A, amber #FFB85C, copper #E07B39, brass #C9A063, small cyan accents #6FE3D6, soft bloom on light sources, subtle tilt-shift miniature feel, rounded tin-toy robots with screen faces and caterpillar tracks, faceted low-poly rocks, brass and wood materials, painterly but clean, high detail. Scene: a cross-section of a cozy underground mine seen from the side like a dollhouse. At the top, the dark silhouette of a small hillside city at night with only a few warm windows lit. Below, a warm cave gallery where three small rounded tin robots with glowing cyan screen-eyes work in a chain: one picks at a copper crystal vein, one carries a glowing copper gem, and the third drops its gem onto an identical gem on the floor at the exact moment of fusion, releasing a bright amber burst of light. A thin ribbon of amber light rises from the fusion up a lift shaft toward the city windows. A miner seen from behind wearing a yellow helmet with a headlamp watches. In a dark corner, a small curious violet crystalline creature peeks out, harmless. Composition: the fusion burst is the focal point in the central third; calm empty dark space in the upper area for a title. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "keyart_title",
+    "name": "Fondo de la pantalla de título",
+    "ratio": "16:9",
+    "ref": "keyart_master",
+    "where": "Fondo detrás del logotipo y los botones del menú inicial",
+    "prompt": "In the exact same style as the reference image. Cozy low-poly diorama illustration of an underground mine, cut-away view like a miniature model, warm lantern light glowing in deep darkness, palette: deep plum black #17121A, amber #FFB85C, copper #E07B39, brass #C9A063, small cyan accents #6FE3D6, soft bloom on light sources, subtle tilt-shift miniature feel, rounded tin-toy robots with screen faces and caterpillar tracks, faceted low-poly rocks, brass and wood materials, painterly but clean, high detail. Scene: a wide calm view of the same mine diorama, the lift shaft with its glowing amber ring on the left third, one small robot resting with sleepy screen-eyes on the right third, gentle floating dust in lantern light. The whole center of the image is dark, soft and empty so a logo and menu can sit on top. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "steam_vertical",
+    "name": "Cápsula vertical y de biblioteca",
+    "ratio": "3:4 (o 9:16)",
+    "ref": "keyart_master",
+    "where": "Steam: cápsula vertical (748 × 896) y de biblioteca (600 × 900)",
+    "prompt": "In the exact same style as the reference image. Cozy low-poly diorama illustration of an underground mine, cut-away view like a miniature model, warm lantern light glowing in deep darkness, palette: deep plum black #17121A, amber #FFB85C, copper #E07B39, brass #C9A063, small cyan accents #6FE3D6, soft bloom on light sources, subtle tilt-shift miniature feel, rounded tin-toy robots with screen faces and caterpillar tracks, faceted low-poly rocks, brass and wood materials, painterly but clean, high detail. Vertical composition: a tall mine shaft. At the top, the night city with a few lit windows. In the middle, one small rounded tin robot holding up a glowing amber gem that bursts with light, looking up with happy cyan screen-eyes. At the bottom, darker cave layers with teal crystals and a faint violet glow far below. Leave the bottom fifth dark and calm for a logo. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "steam_hero",
+    "name": "Héroe de biblioteca (panorámica)",
+    "ratio": "21:9 (o el más ancho disponible)",
+    "ref": "keyart_master",
+    "where": "Steam: héroe de biblioteca (3840 × 1240), sin logotipo",
+    "prompt": "In the exact same style as the reference image. Cozy low-poly diorama illustration of an underground mine, cut-away view like a miniature model, warm lantern light glowing in deep darkness, palette: deep plum black #17121A, amber #FFB85C, copper #E07B39, brass #C9A063, small cyan accents #6FE3D6, soft bloom on light sources, subtle tilt-shift miniature feel, rounded tin-toy robots with screen faces and caterpillar tracks, faceted low-poly rocks, brass and wood materials, painterly but clean, high detail. Ultra-wide panoramic cross-section of the whole mine: from left to right the cave layers change color — warm copper gallery, steel-blue iron vein with a small forge, dark teal crystal grottoes lit by lanterns, orange pulsing lava forge, and finally a violet starry void with a huge glowing crystal heart. Tiny robots work in every layer. No text. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "steam_background",
+    "name": "Fondo de la página de la tienda",
+    "ratio": "16:9",
+    "ref": "keyart_master",
+    "where": "Steam: fondo de la página (1438 × 810); va detrás de texto",
+    "prompt": "In the exact same style as the reference image, but very dark and low detail: a soft out-of-focus view of cave walls with a few distant warm lantern glows and faint amber dust. Mostly dark plum #17121A, very low contrast, no focal point, suitable as a background behind text. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "char_ada",
+    "name": "ADA, la radio de la mina",
+    "ratio": "1:1",
+    "ref": "keyart_master",
+    "where": "Retrato en los mensajes de ADA y en la tarjeta del tutorial",
+    "prompt": "In the exact same style as the reference image. Cozy low-poly diorama illustration of an underground mine, cut-away view like a miniature model, warm lantern light glowing in deep darkness, palette: deep plum black #17121A, amber #FFB85C, copper #E07B39, brass #C9A063, small cyan accents #6FE3D6, soft bloom on light sources, subtle tilt-shift miniature feel, rounded tin-toy robots with screen faces and caterpillar tracks, faceted low-poly rocks, brass and wood materials, painterly but clean, high detail. Portrait of an old brass-and-wood mining radio set on a workbench, round speaker grille emitting soft cyan sound-wave light, two small analog dials, a short antenna, warm and friendly like a character. In the polished brass casing, an extremely subtle reflection of a woman's silhouette with hair tied up, seen from behind, barely noticeable. Dark background, centered, plenty of margin. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "char_mireya",
+    "name": "Mireya Calderón (de espaldas)",
+    "ratio": "1:1",
+    "ref": "keyart_master",
+    "where": "Códex (entrada de Mireya) y diario",
+    "prompt": "In the exact same style as the reference image. Cozy low-poly diorama illustration of an underground mine, cut-away view like a miniature model, warm lantern light glowing in deep darkness, palette: deep plum black #17121A, amber #FFB85C, copper #E07B39, brass #C9A063, small cyan accents #6FE3D6, soft bloom on light sources, subtle tilt-shift miniature feel, rounded tin-toy robots with screen faces and caterpillar tracks, faceted low-poly rocks, brass and wood materials, painterly but clean, high detail. A female mining engineer seen strictly from behind, work overalls, hair tied up, holding a worn notebook under one arm and her helmet in the other hand, standing at the top of a stone staircase that descends into a glowing violet crystal abyss. A small lantern at her feet casts warm light. Her face is never visible. Melancholic but hopeful mood. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "char_bots",
+    "name": "Hoja de referencia de los bots (niveles 1 a 6)",
+    "ratio": "16:9",
+    "ref": "keyart_master (y, si quieres, una captura del juego con los bots en fila)",
+    "where": "Referencia interna para mantener la coherencia (y futuros modelos 3D)",
+    "prompt": "In the exact same style as the reference image. Cozy low-poly diorama illustration of an underground mine, cut-away view like a miniature model, warm lantern light glowing in deep darkness, palette: deep plum black #17121A, amber #FFB85C, copper #E07B39, brass #C9A063, small cyan accents #6FE3D6, soft bloom on light sources, subtle tilt-shift miniature feel, rounded tin-toy robots with screen faces and caterpillar tracks, faceted low-poly rocks, brass and wood materials, painterly but clean, high detail. Character reference sheet on a plain dark plum background: six small rounded tin-toy mining robots standing in a row, each with a screen face showing two cyan eyes, caterpillar tracks, a small pickaxe arm and an antenna with a glowing tip. They grow in size and detail from left to right: 1 cream body; 2 teal body with brass rivets; 3 copper body with a back tank; 4 steel-blue body with a glass dome on top; 5 violet body with side headlights; 6 golden body with a floating golden ring above. Evenly spaced, same lighting, front three-quarter view. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "diario_d1",
+    "name": "Viñeta D1 · Día 1",
+    "ratio": "3:2",
+    "ref": "Ninguna (será la referencia de las demás viñetas)",
+    "where": "Códex → Diario de Mireya, página «Día 1»",
+    "prompt": "Ink sketch on aged notebook paper #EFE2C6, sepia lines with a single amber accent color #E07B39, loose confident linework, cross-hatching, small handwritten-style margin doodles without legible words, like a mining engineer's field diary. Scene: two human hands demonstrating a gesture with a small pickaxe while a tiny rounded robot beside them copies the same gesture. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "diario_d2",
+    "name": "Viñeta D2 · Sobre el Lumen",
+    "ratio": "3:2",
+    "ref": "diario_d1",
+    "where": "Códex → Diario de Mireya, página «Sobre el Lumen»",
+    "prompt": "In the exact same style as the reference image. Ink sketch on aged notebook paper #EFE2C6, sepia lines with a single amber accent color #E07B39, loose confident linework, cross-hatching, small handwritten-style margin doodles without legible words, like a mining engineer's field diary. Scene: two identical faceted crystals touching, concentric sound waves between them merging into one brighter crystal. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "diario_d3",
+    "name": "Viñeta D3 · La forja",
+    "ratio": "3:2",
+    "ref": "diario_d1",
+    "where": "Códex → Diario de Mireya, página «La forja»",
+    "prompt": "In the exact same style as the reference image. Ink sketch on aged notebook paper #EFE2C6, sepia lines with a single amber accent color #E07B39, loose confident linework, cross-hatching, small handwritten-style margin doodles without legible words, like a mining engineer's field diary. Scene: a small forge with an iron ingot and a lump of coal going in and a steel bar coming out, spiral smoke. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "diario_d4",
+    "name": "Viñeta D4 · Estática",
+    "ratio": "3:2",
+    "ref": "diario_d1",
+    "where": "Códex → Diario de Mireya, página «Estática»",
+    "prompt": "In the exact same style as the reference image. Ink sketch on aged notebook paper #EFE2C6, sepia lines with a single amber accent color #E07B39, loose confident linework, cross-hatching, small handwritten-style margin doodles without legible words, like a mining engineer's field diary. Scene: a small robot whose screen face shows an arrow pointing the wrong way, a few jagged static marks around it. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "diario_d5",
+    "name": "Viñeta D5 · Las grutas",
+    "ratio": "3:2",
+    "ref": "diario_d1",
+    "where": "Códex → Diario de Mireya, página «Las grutas»",
+    "prompt": "In the exact same style as the reference image. Ink sketch on aged notebook paper #EFE2C6, sepia lines with a single amber accent color #E07B39, loose confident linework, cross-hatching, small handwritten-style margin doodles without legible words, like a mining engineer's field diary. Scene: a small crystalline creature mimicking the footsteps of a robot in the dark, footprints side by side, a lantern being lit. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "diario_d6",
+    "name": "Viñeta D6 · Asamblea",
+    "ratio": "3:2",
+    "ref": "diario_d1",
+    "where": "Códex → Diario de Mireya, página «Asamblea»",
+    "prompt": "In the exact same style as the reference image. Ink sketch on aged notebook paper #EFE2C6, sepia lines with a single amber accent color #E07B39, loose confident linework, cross-hatching, small handwritten-style margin doodles without legible words, like a mining engineer's field diary. Scene: a heavy door sealed with chains and, on the floor in front of it, a small lit lantern. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "diario_d7",
+    "name": "Viñeta D7 · Latidos",
+    "ratio": "3:2",
+    "ref": "diario_d1",
+    "where": "Códex → Diario de Mireya, página «Latidos»",
+    "prompt": "In the exact same style as the reference image. Ink sketch on aged notebook paper #EFE2C6, sepia lines with a single amber accent color #E07B39, loose confident linework, cross-hatching, small handwritten-style margin doodles without legible words, like a mining engineer's field diary. Scene: a river of lava drawn with pulse lines like a heartbeat and a robot counting with its pincer: one, two, three, four (as tally marks, no words). Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "diario_d8",
+    "name": "Viñeta D8 · Lo he entendido",
+    "ratio": "3:2",
+    "ref": "diario_d1",
+    "where": "Códex → Diario de Mireya, página «Lo he entendido»",
+    "prompt": "In the exact same style as the reference image. Ink sketch on aged notebook paper #EFE2C6, sepia lines with a single amber accent color #E07B39, loose confident linework, cross-hatching, small handwritten-style margin doodles without legible words, like a mining engineer's field diary. Scene: a huge crystal like a listening ear in the dark, with small crystalline creatures around it like fingers. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "diario_d9",
+    "name": "Viñeta D9 · Sobre ADA",
+    "ratio": "3:2",
+    "ref": "diario_d1",
+    "where": "Códex → Diario de Mireya, página «Sobre ADA»",
+    "prompt": "In the exact same style as the reference image. Ink sketch on aged notebook paper #EFE2C6, sepia lines with a single amber accent color #E07B39, loose confident linework, cross-hatching, small handwritten-style margin doodles without legible words, like a mining engineer's field diary. Scene: a brass radio, and reflected in its casing the side profile of a woman, drawn delicately. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "diario_d10",
+    "name": "Viñeta D10 · Última página",
+    "ratio": "3:2",
+    "ref": "diario_d1",
+    "where": "Códex → Diario de Mireya, página «Última página»",
+    "prompt": "In the exact same style as the reference image. Ink sketch on aged notebook paper #EFE2C6, sepia lines with a single amber accent color #E07B39, loose confident linework, cross-hatching, small handwritten-style margin doodles without legible words, like a mining engineer's field diary. Scene: a hand offering a glowing crystal toward a dark abyss, rays of light, the last page of a notebook. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "final_nucleo",
+    "name": "El Núcleo aprende",
+    "ratio": "16:9",
+    "ref": "keyart_master",
+    "where": "Diapositiva del final",
+    "prompt": "In the exact same style as the reference image. Cozy low-poly diorama illustration of an underground mine, cut-away view like a miniature model, warm lantern light glowing in deep darkness, palette: deep plum black #17121A, amber #FFB85C, copper #E07B39, brass #C9A063, small cyan accents #6FE3D6, soft bloom on light sources, subtle tilt-shift miniature feel, rounded tin-toy robots with screen faces and caterpillar tracks, faceted low-poly rocks, brass and wood materials, painterly but clean, high detail. In a violet starry void, a huge glowing crystalline heart with slowly rotating rings. A small robot has just delivered a bright violet gem into it; lines of light flow from the robot's screen into the crystal, as if the crystal is reading a lesson. Awe and calm. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "final_luciernagas",
+    "name": "Los Glitchlings se vuelven luciérnagas",
+    "ratio": "16:9",
+    "ref": "keyart_master",
+    "where": "Diapositiva del final",
+    "prompt": "In the exact same style as the reference image. Cozy low-poly diorama illustration of an underground mine, cut-away view like a miniature model, warm lantern light glowing in deep darkness, palette: deep plum black #17121A, amber #FFB85C, copper #E07B39, brass #C9A063, small cyan accents #6FE3D6, soft bloom on light sources, subtle tilt-shift miniature feel, rounded tin-toy robots with screen faces and caterpillar tracks, faceted low-poly rocks, brass and wood materials, painterly but clean, high detail. Many small crystalline creatures, formerly violet, now glowing soft golden like fireflies, resting on the cave walls and floating in the air above working robots. Peaceful, magical, warm. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "final_alba",
+    "name": "Alba iluminada",
+    "ratio": "16:9",
+    "ref": "keyart_master",
+    "where": "Última diapositiva del final y pestaña Alba del Códex",
+    "prompt": "In the exact same style as the reference image. Cozy low-poly diorama illustration of an underground mine, cut-away view like a miniature model, warm lantern light glowing in deep darkness, palette: deep plum black #17121A, amber #FFB85C, copper #E07B39, brass #C9A063, small cyan accents #6FE3D6, soft bloom on light sources, subtle tilt-shift miniature feel, rounded tin-toy robots with screen faces and caterpillar tracks, faceted low-poly rocks, brass and wood materials, painterly but clean, high detail. The small hillside city at night, now with every single window glowing warm amber, seen from a distance under a starry sky; below the city, a faint cut-away glimpse of the mine with its lit lanterns. Small silhouettes of children on a rooftop looking at the lights (no faces). Joyful, emotional. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "codex_konstrukta",
+    "name": "Konstrukta",
+    "ratio": "4:3",
+    "ref": "keyart_master",
+    "where": "Códex → Konstrukta",
+    "prompt": "In the exact same style as the reference image. Cozy low-poly diorama illustration of an underground mine, cut-away view like a miniature model, warm lantern light glowing in deep darkness, palette: deep plum black #17121A, amber #FFB85C, copper #E07B39, brass #C9A063, small cyan accents #6FE3D6, soft bloom on light sources, subtle tilt-shift miniature feel, rounded tin-toy robots with screen faces and caterpillar tracks, faceted low-poly rocks, brass and wood materials, painterly but clean, high detail. Scene: the entrance of the mine carved into a hillside, a big arched portal with brass trim and rails going in. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "codex_lumen",
+    "name": "El Lumen",
+    "ratio": "4:3",
+    "ref": "keyart_master",
+    "where": "Códex → El Lumen",
+    "prompt": "In the exact same style as the reference image. Cozy low-poly diorama illustration of an underground mine, cut-away view like a miniature model, warm lantern light glowing in deep darkness, palette: deep plum black #17121A, amber #FFB85C, copper #E07B39, brass #C9A063, small cyan accents #6FE3D6, soft bloom on light sources, subtle tilt-shift miniature feel, rounded tin-toy robots with screen faces and caterpillar tracks, faceted low-poly rocks, brass and wood materials, painterly but clean, high detail. Scene: two identical copper crystals merging into one bigger glowing crystal, sound-wave rings. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "codex_gremio",
+    "name": "El Gremio",
+    "ratio": "4:3",
+    "ref": "keyart_master",
+    "where": "Códex → El Gremio",
+    "prompt": "In the exact same style as the reference image. Cozy low-poly diorama illustration of an underground mine, cut-away view like a miniature model, warm lantern light glowing in deep darkness, palette: deep plum black #17121A, amber #FFB85C, copper #E07B39, brass #C9A063, small cyan accents #6FE3D6, soft bloom on light sources, subtle tilt-shift miniature feel, rounded tin-toy robots with screen faces and caterpillar tracks, faceted low-poly rocks, brass and wood materials, painterly but clean, high detail. Scene: a round table of old engineers' tools, notebooks and blueprints of robots under a lamp, empty chairs. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "codex_glitchlings",
+    "name": "Glitchlings",
+    "ratio": "4:3",
+    "ref": "keyart_master",
+    "where": "Códex → Glitchlings",
+    "prompt": "In the exact same style as the reference image. Cozy low-poly diorama illustration of an underground mine, cut-away view like a miniature model, warm lantern light glowing in deep darkness, palette: deep plum black #17121A, amber #FFB85C, copper #E07B39, brass #C9A063, small cyan accents #6FE3D6, soft bloom on light sources, subtle tilt-shift miniature feel, rounded tin-toy robots with screen faces and caterpillar tracks, faceted low-poly rocks, brass and wood materials, painterly but clean, high detail. Scene: a small violet crystalline creature with one cyan eye, curious, flickering static edges. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "codex_red",
+    "name": "La red de Konstrukta",
+    "ratio": "4:3",
+    "ref": "keyart_master",
+    "where": "Códex → La red de Konstrukta",
+    "prompt": "In the exact same style as the reference image. Cozy low-poly diorama illustration of an underground mine, cut-away view like a miniature model, warm lantern light glowing in deep darkness, palette: deep plum black #17121A, amber #FFB85C, copper #E07B39, brass #C9A063, small cyan accents #6FE3D6, soft bloom on light sources, subtle tilt-shift miniature feel, rounded tin-toy robots with screen faces and caterpillar tracks, faceted low-poly rocks, brass and wood materials, painterly but clean, high detail. Scene: a copper dynamo with glowing cyan coils, cables running to a forge and a crucible. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "codex_crisol",
+    "name": "El crisol",
+    "ratio": "4:3",
+    "ref": "keyart_master",
+    "where": "Códex → El crisol",
+    "prompt": "In the exact same style as the reference image. Cozy low-poly diorama illustration of an underground mine, cut-away view like a miniature model, warm lantern light glowing in deep darkness, palette: deep plum black #17121A, amber #FFB85C, copper #E07B39, brass #C9A063, small cyan accents #6FE3D6, soft bloom on light sources, subtle tilt-shift miniature feel, rounded tin-toy robots with screen faces and caterpillar tracks, faceted low-poly rocks, brass and wood materials, painterly but clean, high detail. Scene: a brass crucible with molten amber light inside and two identical gems falling into it. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  },
+  {
+    "id": "codex_vacio",
+    "name": "El Vacío",
+    "ratio": "4:3",
+    "ref": "keyart_master",
+    "where": "Códex → El Vacío",
+    "prompt": "In the exact same style as the reference image. Cozy low-poly diorama illustration of an underground mine, cut-away view like a miniature model, warm lantern light glowing in deep darkness, palette: deep plum black #17121A, amber #FFB85C, copper #E07B39, brass #C9A063, small cyan accents #6FE3D6, soft bloom on light sources, subtle tilt-shift miniature feel, rounded tin-toy robots with screen faces and caterpillar tracks, faceted low-poly rocks, brass and wood materials, painterly but clean, high detail. Scene: floating violet rock platforms in a starry void, gravity arrows bending sideways. Avoid: text, letters, logos, watermarks, human faces, weapons, cold sci-fi neon blue, chrome, photorealism, noisy textures, pure white, pure black."
+  }
+]
