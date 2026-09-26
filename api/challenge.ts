@@ -5,7 +5,7 @@
 // Variables de entorno (Vercel → Settings → Environment Variables):
 //   VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY  (las mismas que usa el juego)
 //   SUPABASE_SERVICE_ROLE_KEY                  (secreta: solo existe en el servidor)
-import { verifyChallenge } from '../src/sim/challenge';
+import { verifyChallenge } from '../src/sim/challenge.js';
 
 declare const process: { env: Record<string, string | undefined> };
 

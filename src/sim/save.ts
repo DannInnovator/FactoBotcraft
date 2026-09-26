@@ -1,7 +1,7 @@
 // Guardado local. Todo el estado del mundo es JSON puro.
-import { BASE_CONDS, BASE_OPS } from './content';
-import { maxBlockId, setBlockSeq } from './program';
-import type { Block, Layer, World } from './types';
+import { BASE_CONDS, BASE_OPS } from './content.js';
+import { maxBlockId, setBlockSeq } from './program.js';
+import type { Block, Layer, World } from './types.js';
 
 const KEY = 'factobotcraft.save.v1';
 

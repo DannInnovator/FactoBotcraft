@@ -1,12 +1,12 @@
 // Desafío Diario: la misma cueva para todo el mundo ese día. Gana quien fusione
 // el mineral objetivo en menos ticks. La marca de ADA se calcula en vivo
 // ejecutando su programa de referencia sobre el mismo mapa.
-import { BASE_CONDS, OPS, memoryFor } from './content';
-import { cloneExact, memoryUse, mk } from './program';
-import { hash } from './rng';
-import { tick } from './sim';
-import type { Block, Op, Routine, SimEvent, World } from './types';
-import { generateLayer, makeBot, setProgram } from './world';
+import { BASE_CONDS, OPS, memoryFor } from './content.js';
+import { cloneExact, memoryUse, mk } from './program.js';
+import { hash } from './rng.js';
+import { tick } from './sim.js';
+import type { Block, Op, Routine, SimEvent, World } from './types.js';
+import { generateLayer, makeBot, setProgram } from './world.js';
 
 export interface ChallengeDef {
   day: string;

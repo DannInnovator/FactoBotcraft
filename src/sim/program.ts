@@ -1,7 +1,7 @@
 // Utilidades sobre programas (listas de bloques): creación, clonado, conteo,
 // descripción textual, códigos para compartir y sugerencias de generalización.
-import { COND_LABEL, OPS } from './content';
-import { DIR_ARROW, type Block, type Cond, type Op, type Routine } from './types';
+import { COND_LABEL, OPS } from './content.js';
+import { DIR_ARROW, type Block, type Cond, type Op, type Routine } from './types.js';
 
 let seq = 1;
 

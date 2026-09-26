@@ -19,11 +19,11 @@ import {
   energyValue,
   itemValue,
   recipeFor,
-} from './content';
-import { cloneExact, findBlock, mk, sameProgram } from './program';
-import { hash } from './rng';
-import { DELTA, DIRS, INTERACTIVE, type Action, type Block, type Bot, type Cond, type Dir, type Frame, type Item, type Layer, type SimEvent, type Tile, type World } from './types';
-import { isWalkable, tileAt } from './world';
+} from './content.js';
+import { cloneExact, findBlock, mk, sameProgram } from './program.js';
+import { hash } from './rng.js';
+import { DELTA, DIRS, INTERACTIVE, type Action, type Block, type Bot, type Cond, type Dir, type Frame, type Item, type Layer, type SimEvent, type Tile, type World } from './types.js';
+import { isWalkable, tileAt } from './world.js';
 
 export interface TickOpts {
   offline?: boolean;

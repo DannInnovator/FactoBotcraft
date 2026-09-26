@@ -1,8 +1,8 @@
 // Turno de Noche: al volver, se simula lo que hicieron tus bots mientras no
 // estabas (con precisión hasta 30 min, proyectando el ritmo el resto del tiempo).
-import { MAX_OFFLINE_MS, TICKS_PER_SEC } from './content';
-import { tick } from './sim';
-import type { Incident, Item, SimEvent, World } from './types';
+import { MAX_OFFLINE_MS, TICKS_PER_SEC } from './content.js';
+import { tick } from './sim.js';
+import type { Incident, Item, SimEvent, World } from './types.js';
 
 export const EXACT_TICKS = 18000; // 30 minutos de juego simulados paso a paso
 

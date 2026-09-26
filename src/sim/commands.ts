@@ -12,11 +12,11 @@ import {
   TRAIT_IDS,
   botCost,
   memoryFor,
-} from './content';
-import { cloneExact, cloneFresh, extractFunction, memoryUse, sameProgram } from './program';
-import { hash } from './rng';
-import type { Block, Bot, Building, Layer, Routine, Tile, TraitId, World } from './types';
-import { generateLayer, isWalkable, makeBot, setProgram, tileAt } from './world';
+} from './content.js';
+import { cloneExact, cloneFresh, extractFunction, memoryUse, sameProgram } from './program.js';
+import { hash } from './rng.js';
+import type { Block, Bot, Building, Layer, Routine, Tile, TraitId, World } from './types.js';
+import { generateLayer, isWalkable, makeBot, setProgram, tileAt } from './world.js';
 
 export type CmdResult = { ok: true; msg?: string } | { ok: false; msg: string };
 const fail = (msg: string): CmdResult => ({ ok: false, msg });

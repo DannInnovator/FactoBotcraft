@@ -1,8 +1,8 @@
 // Creación del mundo y generación procedural (determinista por semilla) de capas.
-import { BASE_CONDS, BASE_ENERGY_CAP, BASE_OPS, BOT_NAMES, LAYERS } from './content';
-import { cloneExact } from './program';
-import { mulberry32 } from './rng';
-import type { Block, Bot, Layer, Tile, World } from './types';
+import { BASE_CONDS, BASE_ENERGY_CAP, BASE_OPS, BOT_NAMES, LAYERS } from './content.js';
+import { cloneExact } from './program.js';
+import { mulberry32 } from './rng.js';
+import type { Block, Bot, Layer, Tile, World } from './types.js';
 
 export function idx(l: Layer, x: number, y: number): number {
   return y * l.w + x;

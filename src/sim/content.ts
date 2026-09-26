@@ -1,5 +1,5 @@
 // Datos de diseño: minerales, recetas, rasgos, capas, instrucciones y economía.
-import type { Building, CondKind, Item, OreKind, Op, TileType, TraitId } from './types';
+import type { Building, CondKind, Item, OreKind, Op, TileType, TraitId } from './types.js';
 
 export const TICKS_PER_SEC = 10;
 export const DAY_TICKS = 3600; // un ciclo día/noche = 6 minutos reales
