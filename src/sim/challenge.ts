@@ -1,11 +1,11 @@
 // Desafío Diario: la misma cueva para todo el mundo ese día. Gana quien fusione
 // el mineral objetivo en menos ticks. La marca de ADA se calcula en vivo
 // ejecutando su programa de referencia sobre el mismo mapa.
-import { BASE_CONDS, OPS } from './content';
-import { countBlocks, mk } from './program';
+import { BASE_CONDS, OPS, memoryFor } from './content';
+import { cloneExact, memoryUse, mk } from './program';
 import { hash } from './rng';
 import { tick } from './sim';
-import type { Block, Op, SimEvent, World } from './types';
+import type { Block, Op, Routine, SimEvent, World } from './types';
 import { generateLayer, makeBot, setProgram } from './world';
 
 export interface ChallengeDef {
@@ -96,12 +96,65 @@ export function challengeDone(w: World, def: ChallengeDef): boolean {
   return (w.delivered.cobre ?? 0) >= def.goalLvl;
 }
 
-export function runChallenge(def: ChallengeDef, programs: Block[][]): ChallengeResult {
+export function runChallenge(def: ChallengeDef, programs: Block[][], fns: Routine[] = []): ChallengeResult {
   const w = challengeWorld(def);
+  w.library = fns;
   w.layers[0].bots.forEach((b, i) => setProgram(b, programs[i] ?? []));
   challengeStep(w, def, def.maxTicks + 1);
-  const blocks = programs.reduce((a, p) => a + countBlocks(p), 0);
+  const blocks = programs.reduce((a, p) => a + memoryUse(p, fns), 0);
   return { success: challengeDone(w, def), ticks: w.tick, blocks };
+}
+
+// ---------- Marcas verificables ----------
+// El ranking no se fía del navegador: el servidor vuelve a jugar el desafío con
+// los programas enviados (la simulación es determinista) y apunta su propia marca.
+
+/** Lo que se envía para competir: un programa por retador y las funciones a las que llaman. */
+export interface ChallengeEntry {
+  programs: Block[][];
+  fns: { id: string; blocks: Block[] }[];
+}
+
+const MAX_DEPTH = 12;
+const MAX_NODES = 600;
+
+/** Comprueba que un programa tenga la forma de bloques del juego (sin confiar en quien lo envía). */
+function validBlocks(list: unknown, depth: number, count: { n: number }): list is Block[] {
+  if (!Array.isArray(list) || depth > MAX_DEPTH) return false;
+  for (const b of list as Block[]) {
+    if (++count.n > MAX_NODES || !b || typeof b !== 'object' || !(b.op in OPS)) return false;
+    if (b.n !== undefined && !(Number.isInteger(b.n) && b.n >= 0 && b.n <= 99)) return false;
+    if (b.text !== undefined && (typeof b.text !== 'string' || b.text.length > 200)) return false;
+    if (b.routine !== undefined && typeof b.routine !== 'string') return false;
+    if (b.body !== undefined && !validBlocks(b.body, depth + 1, count)) return false;
+    if (b.alt !== undefined && !validBlocks(b.alt, depth + 1, count)) return false;
+  }
+  return true;
+}
+
+/** Memoria de un retador del desafío (bloques, contando sus funciones una vez). */
+export function challengeMemory(def: ChallengeDef): number {
+  return memoryFor(def.botLvl, []);
+}
+
+/** Valida una entrada y juega el desafío con ella. Es la misma comprobación en el juego y en el servidor. */
+export function verifyChallenge(day: string, entry: unknown): { ok: true; result: ChallengeResult } | { ok: false; reason: string } {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return { ok: false, reason: 'Día no válido.' };
+  const def = challengeFor(day);
+  const e = entry as ChallengeEntry;
+  if (!e || !Array.isArray(e.programs) || !Array.isArray(e.fns ?? [])) return { ok: false, reason: 'Entrada no válida.' };
+  if (e.programs.length > def.bots) return { ok: false, reason: `Hoy solo hay ${def.bots} retadores.` };
+  const count = { n: 0 };
+  const fns = (e.fns ?? []).slice(0, 20);
+  for (const f of fns) if (!f || typeof f.id !== 'string' || !validBlocks(f.blocks, 0, count)) return { ok: false, reason: 'Una función no es válida.' };
+  for (const p of e.programs) if (!validBlocks(p, 0, count)) return { ok: false, reason: 'Un programa no es válido.' };
+  const lib: Routine[] = fns.map((f) => ({ id: f.id, name: f.id, author: '', blocks: cloneExact(f.blocks), created: 0, uses: 0, fn: true }));
+  const mem = challengeMemory(def);
+  for (const [i, p] of e.programs.entries()) {
+    const used = memoryUse(p, lib);
+    if (used > mem) return { ok: false, reason: `El programa del Retador-${i + 1} ocupa ${used} bloques y solo caben ${mem}.` };
+  }
+  return { ok: true, result: runChallenge(def, e.programs.map((p) => cloneExact(p)), lib) };
 }
 
 /** Programa de referencia de ADA: un contador binario de fusiones en fila. */
