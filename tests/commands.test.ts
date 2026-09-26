@@ -137,4 +137,23 @@ describe('control de bots', () => {
     restartProgram(b);
     expect(b.stack).toEqual([]);
   });
+
+  it('el Reporte del Amanecer también reconoce a los bots que solo fusionan', () => {
+    const w = createWorld(12);
+    w.lumen = 1_000;
+    const l = w.layers[0];
+    // Dos casillas de suelo contiguas, lejos del montacargas
+    const i = l.tiles.findIndex((t, k) => t.t === 'floor' && l.tiles[k + 1]?.t === 'floor' && !l.bots.some((b) => b.y * l.w + b.x <= k + 1 && b.y * l.w + b.x >= k));
+    const x = i % l.w;
+    const y = Math.floor(i / l.w);
+    const bot = buyBot(w, x, y).bot!;
+    l.tiles[i].item = { kind: 'cobre', lvl: 1 };
+    l.tiles[i + 1].item = { kind: 'cobre', lvl: 1 };
+    loadProgram(w, bot, [mk('recoger', { dir: 'E' }), mk('soltar')]);
+    const rep = simulateOffline(w, 5 * 60 * 1000);
+    expect(rep.merges).toBeGreaterThanOrEqual(1);
+    const me = rep.perBot.find((p) => p.id === bot.id);
+    expect(me?.merges).toBeGreaterThanOrEqual(1);
+    expect(me?.earned).toBe(0);
+  });
 });

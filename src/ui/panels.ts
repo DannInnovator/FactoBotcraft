@@ -22,7 +22,7 @@ import {
 } from '../sim/commands';
 import { BEACON_COLORS, BEACON_LETTERS, BUILDINGS, FUSIONS, LAMP_COST, LAYERS, MAX_BOT_LVL, OPS, ORES, REPAIR_COST, TRAITS, itemLabel, memoryFor } from '../sim/content';
 import type { DawnReport } from '../sim/offline';
-import { cloneExact, cloneFresh, countBlocks, decodeRoutine, encodeRoutine, programToText, suggest } from '../sim/program';
+import { cloneExact, cloneFresh, countBlocks, decodeRoutine, encodeRoutine, memoryUse, programToText, suggest } from '../sim/program';
 import { clearLocal, deserialize, getPref, serialize, setPref } from '../sim/save';
 import type { Block, Bot, Building, TraitId } from '../sim/types';
 import { setProgram } from '../sim/world';
@@ -355,7 +355,7 @@ export function sidePanel(g: Game, bot: Bot, tab: 'prog' | 'ficha', onTab: (t: '
         h('span', {}, 'Nivel'),
         h('span', {}, String(bot.lvl)),
         h('span', {}, 'Memoria'),
-        h('span', {}, `${countBlocks(bot.program)}/${memoryFor(bot.lvl, bot.traits)} bloques`),
+        h('span', {}, `${memoryUse(bot.program, g.world.library)}/${memoryFor(bot.lvl, bot.traits)} bloques`),
         h('span', {}, 'Generación'),
         h('span', {}, String(bot.gen)),
         h('span', {}, 'Padres'),
@@ -1265,7 +1265,7 @@ export function dawnModal(g: Game, r: DawnReport): void {
           'div',
           {},
           h('div', { class: 'label' }, 'Empleados de la noche'),
-          h('div', { class: 'kv', style: 'max-width:380px' }, r.perBot.slice(0, 5).flatMap((p, i) => [h('span', {}, h('b', { class: 'rank' }, `${i + 1}.`), ` ${p.name}`), h('span', {}, `${fmt(p.earned)} ✦`)])),
+          h('div', { class: 'kv', style: 'max-width:380px' }, r.perBot.slice(0, 5).flatMap((p, i) => [h('span', {}, h('b', { class: 'rank' }, `${i + 1}.`), ` ${p.name}`), h('span', {}, [p.earned ? `${fmt(p.earned)} ✦` : '', p.merges ? `${fmt(p.merges)} ${p.merges === 1 ? 'fusión' : 'fusiones'}` : ''].filter(Boolean).join(' · '))])),
         )
       : null,
     h('div', { class: 'label' }, r.incidents.length ? `Incidentes (${r.incidents.length}) · pulsa para ir al bloque exacto` : 'Sin incidentes: una noche perfecta.'),

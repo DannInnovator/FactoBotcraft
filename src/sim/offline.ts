@@ -72,6 +72,12 @@ export function simulateOffline(world: World, awayMs: number, maxTicks = EXACT_T
     startTick: world.tick,
   };
   const per = new Map<number, { id: number; name: string; earned: number; merges: number }>();
+  // Cuentan tanto los bots que venden como los que solo fusionan para otros
+  const worker = (id: number) => {
+    let p = per.get(id);
+    if (!p) per.set(id, (p = { id, name: '', earned: 0, merges: 0 }));
+    return p;
+  };
   const frameEvery = Math.max(1, Math.floor(simTicks / 120));
   const seen = new Set<string>();
   report.frames.push(snapshot(world, layerIdx, baseTiles));
@@ -83,11 +89,10 @@ export function simulateOffline(world: World, awayMs: number, maxTicks = EXACT_T
       if (e.e === 'merge') {
         report.merges++;
         if (!report.bestItem || e.item.lvl > report.bestItem.lvl) report.bestItem = { ...e.item };
+        worker(e.botId).merges++;
       } else if (e.e === 'sell') {
         report.sold++;
-        const p = per.get(e.botId) ?? { id: e.botId, name: '', earned: 0, merges: 0 };
-        p.earned += e.value;
-        per.set(e.botId, p);
+        worker(e.botId).earned += e.value;
       } else if (e.e === 'mine') report.mined++;
       else if (e.e === 'incident') {
         const key = `${e.inc.botId}:${e.inc.msg}`;
@@ -112,6 +117,6 @@ export function simulateOffline(world: World, awayMs: number, maxTicks = EXACT_T
       const p = per.get(b.id);
       if (p) p.name = b.name;
     }
-  report.perBot = [...per.values()].filter((p) => p.name).sort((a, b) => b.earned - a.earned);
+  report.perBot = [...per.values()].filter((p) => p.name).sort((a, b) => b.earned - a.earned || b.merges - a.merges);
   return report;
 }
