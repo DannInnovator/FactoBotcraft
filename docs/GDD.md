@@ -201,6 +201,7 @@ Todo lo descrito en este documento está implementado y se puede jugar, salvo lo
 | Pilar 4 · Turno de Noche | ✅ | 30 min simulados con exactitud y el resto proyectado (tope de 10 h). Reporte del Amanecer con incidentes enlazados al bloque exacto y timelapse cinematográfico con exportación de clip .webm. |
 | Pilar 5 · Gremio | 🟡 | Biblioteca con forks, autores, uso y **códigos FBC1 para compartir sin servidor**. Las regalías y el ranking global necesitan backend (futuro). |
 | Desafío Diario | ✅ | Semilla por fecha, variantes diarias y la marca de ADA calculada en vivo con su programa de referencia (que el jugador puede guardar y estudiar). Fantasmas y ranking global: futuro. |
+| Distinciones del Gremio | ✅ | 23 cadenas de logros con 3 rangos (65 en total) en `src/content/achievements.ts`, en tres familias: Oficio (progreso), Ingenio (ganar sin tocar al Capataz, líneas de producción completas, código elegante, red estable, señales, balizas, funciones compartidas, noches sin estática, Desafío) y Crónica (historia, con dos secretas). La pestaña del Códex aparece con la primera distinción; cada rango revela el siguiente y los de Ingenio dan Fragmentos de Estática. |
 | 5 capas y peligros | ✅ | Forja, oscuridad con lámparas, lava que late, gravedad girada y Glitchlings. |
 | Historia | ✅ | 22 órdenes de trabajo, 10 páginas de diario, 13 entradas de Códex, 3 bots antiguos reparables y el final. Ver `docs/LORE.md`. |
 | Dirección visual | ✅ | Diorama 3D low-poly: luz cálida, bloom, tilt-shift, caras-pantalla con 8 estados de ánimo y partículas de fusión. |

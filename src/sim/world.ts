@@ -199,6 +199,7 @@ export function createWorld(seed = Math.floor(Math.random() * 1e9)): World {
     lastSaved: Date.now(),
     lumenLog: [],
     finished: false,
+    achievements: [],
   };
   const layer = generateLayer(0, seed);
   world.layers.push(layer);

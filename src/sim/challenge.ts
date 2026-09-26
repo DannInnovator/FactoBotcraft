@@ -61,6 +61,7 @@ export function challengeWorld(def: ChallengeDef): World {
     lastSaved: 0,
     lumenLog: [],
     finished: false,
+    achievements: [],
   };
   const [ex, ey] = layer.elevator;
   const spots: [number, number][] = [

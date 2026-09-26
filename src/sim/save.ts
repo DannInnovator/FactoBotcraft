@@ -16,6 +16,7 @@ export function deserialize(json: string): World | null {
     if (!w || !Array.isArray(w.layers)) return null;
     // Migración de partidas anteriores a los edificios y la energía
     w.buildings = w.buildings ?? [];
+    w.achievements = w.achievements ?? [];
     if (w.layers.length >= 2 && !w.buildings.includes('forja')) w.buildings.push('forja');
     for (const l of w.layers) {
       l.energy = l.energy ?? 0;

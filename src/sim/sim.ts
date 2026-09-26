@@ -516,6 +516,7 @@ function startAtomic(world: World, l: Layer, bot: Bot, b: Block, ev: SimEvent[],
       const c = b.color ?? 'rojo';
       if (l.signals[c] > 0) {
         l.signals[c]--;
+        world.flags.signalsHeard = Number(world.flags.signalsHeard ?? 0) + 1;
         return begin(bot, { kind: 'wait', total: 1 });
       }
       return { r: 'hold' };
@@ -807,6 +808,7 @@ function stepMachines(world: World, l: Layer, ev: SimEvent[]): void {
       if (Math.floor((world.tick + (t.phase ?? 0)) / 40) % 2 === 0 && l.energy < l.energyCap) {
         l.energy = Math.min(l.energyCap, l.energy + TURBINE_OUTPUT);
         world.flags.energyTotal = Number(world.flags.energyTotal ?? 0) + TURBINE_OUTPUT;
+        world.flags.energyTurbine = Number(world.flags.energyTurbine ?? 0) + TURBINE_OUTPUT;
       }
       continue;
     }

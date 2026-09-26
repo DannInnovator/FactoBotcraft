@@ -1055,6 +1055,104 @@ h3 {
   color: #6a3a1a;
   margin-bottom: 8px;
 }
+/* Distinciones del Gremio */
+.honor-cat h3 {
+  font-size: 18px;
+  color: var(--lamp);
+  margin: 6px 0 2px;
+}
+.honor-cat > .muted,
+.honor .muted {
+  color: var(--muted);
+  font-size: 12.5px;
+  margin: 0 0 8px;
+}
+.honors {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+.honor {
+  background: #221a25;
+  border: 1px solid #3a2e3a;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+.honor p {
+  margin: 0;
+  line-height: 1.45;
+}
+.honor.done {
+  border-color: #6a5430;
+  background: linear-gradient(#2a2118, #221a25);
+}
+.honor.focus {
+  outline: 2px solid var(--lamp);
+}
+.honor.locked {
+  opacity: 0.6;
+  font-style: italic;
+}
+.honor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.honor-head b {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--paper);
+}
+.ranks {
+  display: inline-flex;
+  gap: 3px;
+}
+.ranks i {
+  font-style: normal;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  min-width: 20px;
+  text-align: center;
+  padding: 1px 4px;
+  border-radius: 4px;
+  border: 1px solid #4a3c44;
+  color: var(--muted);
+}
+.ranks i.on {
+  background: var(--lamp);
+  border-color: var(--lamp);
+  color: #2a1a10;
+}
+.honor .earned {
+  color: var(--crystal);
+  font-size: 12px;
+}
+.honor-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: #120e15;
+  overflow: hidden;
+}
+.honor-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #e07b39, var(--lamp));
+}
+.honor-num,
+.honor-reward {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.honor-reward {
+  color: #c9a0ff;
+}
 /* Ilustraciones del Códex */
 .art-img {
   display: block;

@@ -1,5 +1,6 @@
 // Controlador del juego: une simulación, render 3D, audio e interfaz.
 import { Audio } from './audio/audio';
+import { HonorTracker, evaluateHonors, programSize } from './content/achievements';
 import { ADA_TIPS, CODEX, DIARY, albaWindows, ALBA_WINDOWS } from './content/lore';
 import { QUESTS, type Quest } from './content/quests';
 import { Renderer } from './render/renderer';
@@ -80,6 +81,7 @@ export class Game {
   editorDirty = false;
   private sideTab: 'prog' | 'ficha' = 'prog';
   private sideStatus = '';
+  private honors = new HonorTracker();
   sideCollapsed = false;
   private hudTimer = 0;
 
@@ -322,10 +324,30 @@ export class Game {
     unlock('crisol', w.buildings.includes('crisol'));
   }
 
+  /** Distinciones del Gremio: se miden siempre y se conceden tras encender el primer bot. */
+  private checkHonors(): void {
+    const w = this.world;
+    this.honors.sample(w);
+    if (!w.quests.done.includes('q-bot')) return;
+    const first = w.achievements.length === 0;
+    const got = evaluateHonors(w);
+    if (!got.length) return;
+    this.audio.fanfare();
+    for (const { chain, tier } of got) {
+      const t = chain.tiers[tier];
+      const rank = chain.tiers.length > 1 ? ` (${['I', 'II', 'III'][tier]})` : '';
+      this.toast(`Distinción del Gremio: ${t.title}${rank}${t.frags ? ` (+${t.frags} ◆)` : ''}`, 'good', () => P.codexModal(this, 'honors', chain.id), `honor:${chain.id}:${tier}`);
+    }
+    if (first && !this.tutorial.active)
+      this.say('El Gremio llevaba un libro de distinciones para los ingenieros que hacían algo digno de recordar. Lo he desempolvado: lo tienes en el Códex, pestaña «Distinciones». Las mejores no se ganan trabajando más, sino trabajando menos.');
+    this.save();
+  }
+
   // ---------- Eventos de la simulación ----------
   private handleEvents(ev: SimEvent[]): void {
     const cur = this.world.current;
     const capId = this.captain().id;
+    this.honors.onEvents(this.world, ev);
     for (const e of ev) {
       switch (e.e) {
         case 'merge':
@@ -399,6 +421,8 @@ export class Game {
             this.world.finished = true;
             this.world.flags.peace = 1;
             const b = this.layer().bots.find((x) => x.id === e.botId);
+            // Para «La lección perfecta»: el tamaño del programa de quien entregó la nucleita
+            this.world.flags.lessonBlocks = b && !b.captain ? programSize(this.world, b.program) : 0;
             setTimeout(() => P.endingModal(this, b ?? null), 1200);
           }
           break;
@@ -489,6 +513,7 @@ export class Game {
       if (!this.demo && !this.replay && !this.challenge) {
         this.checkQuests();
         this.checkCodex();
+        this.checkHonors();
       }
       this.updateHud();
     }
@@ -523,6 +548,7 @@ export class Game {
 
   runOffline(awayMs: number): void {
     const report = simulateOffline(this.world, awayMs);
+    this.honors.offline(this.world, report.lumenEarned + report.lumenProjected);
     this.acc = 0;
     this.save();
     if (report.lumenEarned + report.lumenProjected > 0 || report.incidents.length) P.dawnModal(this, report);
@@ -784,6 +810,7 @@ export class Game {
     this.handleEvents(ev);
     if (r.block) {
       this.follow = true;
+      this.honors.captainActed(this.world);
       if (r.block.op === 'mover') {
         this.world.flags.moves = Number(this.world.flags.moves ?? 0) + 1;
         this.audio.step();
@@ -804,6 +831,7 @@ export class Game {
     const ev: SimEvent[] = [];
     const r = captainUse(this.world, ev);
     this.handleEvents(ev);
+    if (r.block) this.honors.captainActed(this.world);
     if (r.block) this.record(r.block);
     else if (r.msg) this.toast(`Capataz: ${r.msg}.`, 'bad', undefined, 'cap:' + r.msg);
   }

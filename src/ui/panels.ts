@@ -1,5 +1,6 @@
 // Pantallas y paneles del juego (DOM). Cada función recibe el controlador.
 import type { Game } from '../game';
+import { HONORS, HONOR_TOTAL, earnedTiers, type HonorCat, type HonorChain } from '../content/achievements';
 import { art, CODEX_ART, endingArt } from '../content/art';
 import { ALBA_WINDOWS, CODEX, DIARY, ENDING, INTRO, OLD_BOTS, albaWindows } from '../content/lore';
 import { adaMark, adaProgram, challengeFor, challengeWorld, runChallenge, todayKey, type ChallengeDef } from '../sim/challenge';
@@ -730,18 +731,77 @@ export function workshopModal(g: Game): void {
 }
 
 // ---------- Códex, diario, Alba y estadísticas ----------
+const HONOR_CATS: [HonorCat, string, string][] = [
+  ['ingenio', 'Ingenio', 'Para quien consigue más trabajando menos: automatiza, coordina y escribe código que se sostenga solo.'],
+  ['oficio', 'Oficio', 'El camino de todo capataz, paso a paso.'],
+  ['cronica', 'Crónica', 'Lo que cuenta la mina a quien la escucha.'],
+];
+const RANKS = ['I', 'II', 'III'];
+
+/** Distinciones del Gremio: cada cadena muestra sus rangos, el siguiente objetivo y su progreso. */
+function honorsView(g: Game, focus?: string): HTMLElement {
+  const w = g.world;
+  const card = (c: HonorChain) => {
+    const got = earnedTiers(w, c);
+    const shown = c.visible ? c.visible(w) : true;
+    if (got === 0 && (c.secret || !shown))
+      return h('div', { class: 'honor locked' }, h('div', { class: 'honor-head' }, h('b', {}, c.secret ? 'Distinción secreta' : '???')), h('p', {}, c.hint ?? 'Aún no has descubierto esto.'));
+    const done = got === c.tiers.length;
+    const next = c.tiers[Math.min(got, c.tiers.length - 1)];
+    const v = c.value?.(w);
+    const bar = !done && !c.steps && v !== undefined && next.n ? Math.min(1, v / next.n) : null;
+    return h(
+      'div',
+      { class: `honor ${done ? 'done' : ''} ${focus === c.id ? 'focus' : ''}`, id: `honor-${c.id}` },
+      h(
+        'div',
+        { class: 'honor-head' },
+        h('b', {}, c.name),
+        h(
+          'span',
+          { class: 'ranks', 'aria-label': `${got} de ${c.tiers.length} rangos` },
+          c.tiers.map((t, i) => h('i', { class: i < got ? 'on' : '', title: `${RANKS[i]} · ${t.title}` }, c.tiers.length > 1 ? RANKS[i] : '★')),
+        ),
+      ),
+      got ? h('p', { class: 'earned' }, '✔ ', c.tiers.slice(0, got).map((t) => t.title).join(' · ')) : null,
+      done
+        ? h('p', { class: 'muted' }, 'Cadena completada.')
+        : [
+            h('p', {}, h('span', { class: 'label' }, c.tiers.length > 1 ? `Rango ${RANKS[got]} · ${next.title}` : next.title), h('br'), next.desc),
+            bar !== null ? h('div', { class: 'honor-bar', role: 'progressbar', 'aria-valuenow': String(Math.round(bar * 100)), 'aria-valuemin': '0', 'aria-valuemax': '100' }, h('i', { style: `width:${bar * 100}%` })) : null,
+            bar !== null ? h('span', { class: 'honor-num' }, `${fmt(v!)} / ${fmt(next.n!)}${c.unit ? ` ${c.unit}` : ''}`) : null,
+            next.frags ? h('span', { class: 'honor-reward' }, `Recompensa: +${next.frags} ◆`) : null,
+          ],
+    );
+  };
+  const el = h(
+    'div',
+    { class: 'stack' },
+    h('p', { class: 'prose', style: 'margin:0' }, 'El libro de distinciones del Gremio de Ingenieros. Cada cadena tiene tres rangos: consigue uno y se revela el siguiente.'),
+    HONOR_CATS.map(([cat, name, blurb]) => {
+      const chains = HONORS.filter((c) => c.cat === cat);
+      const got = chains.reduce((a, c) => a + earnedTiers(w, c), 0);
+      const total = chains.reduce((a, c) => a + c.tiers.length, 0);
+      return h('section', { class: 'honor-cat' }, h('h3', {}, `${name} · ${got}/${total}`), h('p', { class: 'muted' }, blurb), h('div', { class: 'honors' }, chains.map(card)));
+    }),
+  );
+  if (focus) setTimeout(() => el.querySelector(`#honor-${focus}`)?.scrollIntoView({ block: 'center' }), 50);
+  return el;
+}
+
 /** Ilustración decorativa (el texto de al lado ya la describe), o null si no hay. */
 function figure(id: string | undefined, cls: string): HTMLElement | null {
   const src = id && art(id);
   return src ? h('img', { class: `art-img ${cls}`, src, alt: '', loading: 'lazy', decoding: 'async' }) : null;
 }
 
-export function codexModal(g: Game, tab: 'codex' | 'diary' | 'alba' | 'stats', focus?: string): void {
+export function codexModal(g: Game, tab: 'codex' | 'diary' | 'alba' | 'stats' | 'honors', focus?: string): void {
   const body = h('div', { class: 'stack' });
   let cur = tab;
   let sel = focus;
   const render = () => {
     body.innerHTML = '';
+    const honors = g.world.achievements.length;
     const tabs = h(
       'div',
       { class: 'tabs', role: 'tablist' },
@@ -750,12 +810,15 @@ export function codexModal(g: Game, tab: 'codex' | 'diary' | 'alba' | 'stats', f
           ['codex', 'Códex'],
           ['diary', `Diario de Mireya (${g.world.diary.length}/10)`],
           ['alba', 'Alba'],
+          ...(honors ? ([['honors', `Distinciones (${honors}/${HONOR_TOTAL})`]] as const) : []),
           ['stats', 'Estadísticas'],
         ] as const
       ).map(([k, label]) => h('button', { class: cur === k ? 'on' : '', role: 'tab', onclick: () => ((cur = k), (sel = undefined), render()) }, label)),
     );
     body.appendChild(tabs);
-    if (cur === 'codex') {
+    if (cur === 'honors') {
+      body.appendChild(honorsView(g, sel));
+    } else if (cur === 'codex') {
       const unlocked = CODEX.filter((c) => g.world.codex.includes(c.id));
       if (!sel || !unlocked.some((c) => c.id === sel)) sel = unlocked[0]?.id;
       const e = CODEX.find((c) => c.id === sel);
@@ -1285,6 +1348,12 @@ export function challengeModal(g: Game): void {
   );
   const finish = (res: { success: boolean; ticks: number; blocks: number }) => {
     if (res.success && (!best || res.ticks < best)) setPref(`best-${def.day}`, String(res.ticks));
+    // Para «Rival de ADA»: días en que se batió su marca y si fue con menos bloques
+    if (res.success && ada.success && res.ticks < ada.ticks) {
+      g.world.flags[`adaBeat_${def.day}`] = 1;
+      if (res.blocks < ada.blocks) g.world.flags.adaFewer = 1;
+      g.save();
+    }
     g.modals.show({
       title: res.success ? '¡Desafío superado!' : 'No lo lograste esta vez',
       cls: 'narrow',

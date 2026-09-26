@@ -264,6 +264,7 @@ export interface World {
   lastSaved: number;
   lumenLog: number[]; // lumen acumulado por minuto de juego (ventana)
   finished: boolean;
+  achievements: string[]; // distinciones conseguidas («cadena:rango»)
 }
 
 export type SimEvent =
