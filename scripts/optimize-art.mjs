@@ -31,7 +31,8 @@ const STEAM_CUTS = [
   { name: 'main_capsule', src: 'keyart_master', w: 1232, h: 706, pos: 'centre' },
   { name: 'vertical_capsule', src: 'steam_vertical', w: 748, h: 896, pos: 'centre' },
   { name: 'library_capsule', src: 'steam_vertical', w: 600, h: 900, pos: 'centre' },
-  { name: 'library_hero', src: 'steam_hero', w: 3840, h: 1240, pos: 'centre' },
+  // steam_hero_hd: steam_hero reescalado ×4 con Real-ESRGAN (modelo x4plus-anime) y reducido a 3840 px
+  { name: 'library_hero', src: 'steam_hero_hd', w: 3840, h: 1240, pos: 'centre' },
   { name: 'page_background', src: 'steam_background', w: 1438, h: 810, pos: 'centre' },
   { name: 'event_cover', src: 'keyart_master', w: 800, h: 450, pos: 'centre' },
 ];
