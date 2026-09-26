@@ -8,6 +8,7 @@ import {
   LAMP_COST,
   LAYERS,
   REPAIR_COST,
+  MAX_BOT_LVL,
   TRAIT_IDS,
   botCost,
   memoryFor,
@@ -175,7 +176,7 @@ export function mergeBots(world: World, aId: number, bId: number, keep: 'a' | 'b
   const b = l.bots.find((x) => x.id === bId);
   if (!a || !b || a === b || a.captain || b.captain) return fail('Elige dos bots distintos de esta capa.');
   if (a.lvl !== b.lvl) return fail('Solo se fusionan bots del mismo nivel.');
-  if (a.lvl >= 6) return fail('Ese linaje ya alcanzó el nivel máximo.');
+  if (a.lvl >= MAX_BOT_LVL) return fail('Ese linaje ya alcanzó el nivel máximo.');
   const traits = [...new Set([...a.traits, ...b.traits])];
   if (trait && !traits.includes(trait)) traits.push(trait);
   const src = keep === 'a' ? a : b;

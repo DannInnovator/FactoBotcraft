@@ -84,6 +84,7 @@ export class Game {
   private honors = new HonorTracker();
   sideCollapsed = false;
   private hudTimer = 0;
+  private hudObserver: ResizeObserver | null = null;
 
   constructor(canvas: HTMLCanvasElement, ui: HTMLElement) {
     this.ui = ui;
@@ -656,7 +657,7 @@ export class Game {
         icon('moon', 18),
         h('b', {}, 'Turno de Noche'),
         (this.el.replayPct = h('span', { class: 'num' }, '0 %')),
-        h('button', { class: 'btn small', onclick: () => this.endReplay() }, 'Saltar'),
+        h('button', { class: 'btn small', onclick: () => this.endReplay() }, icon('close', 14), 'Saltar'),
       );
       this.ui.appendChild(this.el.replayInfo);
     } else this.el.replayInfo?.remove();
@@ -698,6 +699,10 @@ export class Game {
         }
         return;
       }
+      // Intro y Espacio pulsan el botón al que se llegó con el teclado (Tab); tras un
+      // clic con el ratón el foco no es visible y siguen sirviendo para usar
+      const focused = e.target as HTMLElement;
+      if ((k === ' ' || k === 'enter') && focused.matches?.('button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [role="tab"]:focus-visible')) return;
       if (k === ' ' || k === 'e' || k === 'enter') {
         e.preventDefault();
         this.use();
@@ -1175,6 +1180,13 @@ export class Game {
   // ---------- HUD ----------
   private buildHud(): void {
     this.ui.querySelectorAll('.hud,.orders,.toolbar,.toasts,.compass,.touchpad,.touchact').forEach((e) => e.remove());
+    // Los elementos con role="button" también se activan con Intro o Espacio
+    const keyClick = (e: KeyboardEvent) => {
+      const el = e.currentTarget as HTMLElement;
+      if ((e.key !== 'Enter' && e.key !== ' ') || !el.matches(':focus-visible')) return;
+      e.preventDefault();
+      el.click();
+    };
     const g = (cls: string, label: string, id: string, bar = false, ic = '') =>
       h('div', { class: `gauge plate ${cls}` }, h('span', { class: 'label', title: label }, ic ? icon(ic, 12) : null, h('span', { class: 'lt' }, label)), (this.el[id] = h('span', { class: 'v' }, '0')), bar ? h('div', { class: 'bar' }, (this.el[id + 'Bar'] = h('i', { style: 'width:0%' }))) : null);
     this.el.hud = h(
@@ -1187,7 +1199,7 @@ export class Game {
       g('energy', 'Carga', 'energy', true, 'energy'),
       (this.el.layerBox = h(
         'div',
-        { class: 'layerbox plate', role: 'button', tabindex: '0', title: 'Capas de Konstrukta', onclick: () => P.layersModal(this) },
+        { class: 'layerbox plate', role: 'button', tabindex: '0', title: 'Capas de Konstrukta', onclick: () => P.layersModal(this), onkeydown: keyClick },
         (this.el.layerSub = h('span', { class: 'label' }, '')),
         (this.el.layerName = h('h2', {}, '')),
       )),
@@ -1206,8 +1218,20 @@ export class Game {
     this.el.orders = h('div', { class: `orders plate ${window.innerWidth < 760 ? 'min' : ''}` });
     this.el.toasts = h('div', { class: 'toasts', 'aria-live': 'polite' });
     this.el.toolbar = h('div', { class: 'toolbar plate', role: 'toolbar', 'aria-label': 'Herramientas' });
-    this.el.compass = h('div', { class: 'compass plate', title: 'Girar cámara (Q)', role: 'button', tabindex: '0', onclick: () => this.rotateCam(1) }, h('span', {}, icon('compass', 26)));
+    this.el.compass = h('div', { class: 'compass plate', title: 'Girar cámara (Q)', role: 'button', tabindex: '0', 'aria-label': 'Girar cámara', onclick: () => this.rotateCam(1), onkeydown: keyClick }, h('span', {}, icon('compass', 26)));
     this.ui.append(this.el.hud, this.el.orders, this.el.toasts, this.el.toolbar, this.el.compass);
+    // Los paneles de arriba se colocan justo bajo el HUD, que puede ocupar una o
+    // dos filas según el ancho: así nunca tapan la pausa, la ayuda ni los ajustes.
+    this.hudObserver?.disconnect();
+    this.hudObserver = new ResizeObserver(() => {
+      const r = this.el.hud.getBoundingClientRect();
+      if (r.height > 0) this.ui.style.setProperty('--hud-b', `${Math.round(r.bottom + 10)}px`);
+      this.updateToolbarFade();
+    });
+    this.hudObserver.observe(this.el.hud);
+    // En pantallas estrechas la barra se desplaza: un degradado avisa de que hay más
+    this.el.toolbar.addEventListener('scroll', () => this.updateToolbarFade(), { passive: true });
+    this.hudObserver.observe(this.el.toolbar);
     if (window.matchMedia('(pointer: coarse)').matches) {
       const dirBtn = (cls: string, d: Dir, label: string) =>
         h('button', { class: cls, 'aria-label': label, onpointerdown: (e: Event) => (e.preventDefault(), this.moveCaptain(this.renderer.screenToGrid(d))) }, { N: '▲', S: '▼', W: '◀', E: '▶' }[d]);
@@ -1251,6 +1275,14 @@ export class Game {
     tool('challenge', 'Desafío', null, false, () => P.challengeModal(this));
     const c = canDescend(w);
     if (w.layers.length < LAYERS.length) tool('descend', 'Descender', null, false, () => P.layersModal(this), c.ok ? 'ready' : '', !c.ok);
+    this.updateToolbarFade();
+  }
+
+  private updateToolbarFade(): void {
+    const tb = this.el.toolbar;
+    if (!tb) return;
+    tb.classList.toggle('more-l', tb.scrollLeft > 2);
+    tb.classList.toggle('more-r', tb.scrollLeft + tb.clientWidth < tb.scrollWidth - 2);
   }
 
   renderOrders(): void {

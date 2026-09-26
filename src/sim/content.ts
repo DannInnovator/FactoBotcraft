@@ -72,8 +72,11 @@ export const TRAITS: Record<TraitId, TraitDef> = {
 
 export const TRAIT_IDS = Object.keys(TRAITS) as TraitId[];
 
+/** Nivel máximo de un bot: dos bots de este nivel ya no se pueden fusionar. */
+export const MAX_BOT_LVL = 6;
+
 export function memoryFor(lvl: number, traits: TraitId[]): number {
-  const base = [0, 12, 16, 22, 30, 42, 60][Math.min(lvl, 6)] ?? 60;
+  const base = [0, 12, 16, 22, 30, 42, 60][Math.min(lvl, MAX_BOT_LVL)] ?? 60;
   return base + (traits.includes('memorioso') ? 6 : 0);
 }
 

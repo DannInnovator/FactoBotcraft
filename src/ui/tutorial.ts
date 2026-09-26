@@ -47,9 +47,9 @@ export const STEPS: Step[] = [
   // ---------- Capítulo 1: Lo básico ----------
   {
     chapter: 0,
-    title: 'Bienvenida a Konstrukta',
+    title: 'Llegada a Konstrukta',
     text: () =>
-      'Soy ADA. Te voy a enseñar todo, paso a paso. Cuando un paso te pida hacer algo, espero a que lo hagas; cuando solo sea para leer, pulsa «Siguiente». Puedes reabrir este tutorial cuando quieras con el botón de ayuda (?) de arriba a la derecha.',
+      'Soy ADA. Te voy a enseñar todo, paso a paso. Cuando un paso te pida hacer algo, espero a que lo hagas; cuando solo sea para leer, pulsa «Siguiente». Puedes reabrir este tutorial cuando quieras con el botón de ayuda (?) de la barra de arriba.',
   },
   {
     chapter: 0,
@@ -251,7 +251,7 @@ export const STEPS: Step[] = [
     chapter: 3,
     title: 'Bots y lámparas',
     text: () =>
-      'Con «Bot» ensamblas bots nuevos en cualquier casilla de suelo; el precio sube con cada uno. Con «Lámpara» cuelgas luces en las paredes: iluminan, ahuyentan a los Glitchlings y, en las capas oscuras, dejan que tus bots vean las vetas.',
+      'Con «Bot» ensamblas bots nuevos en cualquier casilla de suelo; el precio sube con cada uno. Con «Lámpara» cuelgas luces en las paredes o del techo, sobre el suelo: iluminan, ahuyentan a los Glitchlings y, en las capas oscuras, dejan que tus bots vean las vetas.',
     target: tool('Bot'),
   },
   {

@@ -20,9 +20,9 @@ import {
   saveRoutine,
   traitOffers,
 } from '../sim/commands';
-import { BEACON_COLORS, BEACON_LETTERS, BUILDINGS, FUSIONS, LAMP_COST, LAYERS, OPS, ORES, REPAIR_COST, TRAITS, itemLabel, memoryFor } from '../sim/content';
+import { BEACON_COLORS, BEACON_LETTERS, BUILDINGS, FUSIONS, LAMP_COST, LAYERS, MAX_BOT_LVL, OPS, ORES, REPAIR_COST, TRAITS, itemLabel, memoryFor } from '../sim/content';
 import type { DawnReport } from '../sim/offline';
-import { cloneExact, cloneFresh, countBlocks, decodeRoutine, encodeRoutine, programToText, suggest } from '../sim/program';
+import { cloneExact, cloneFresh, countBlocks, decodeRoutine, encodeRoutine, memoryUse, programToText, suggest } from '../sim/program';
 import { clearLocal, deserialize, getPref, serialize, setPref } from '../sim/save';
 import type { Block, Bot, Building, TraitId } from '../sim/types';
 import { setProgram } from '../sim/world';
@@ -338,6 +338,7 @@ export function sidePanel(g: Game, bot: Bot, tab: 'prog' | 'ficha', onTab: (t: '
               g.renderSide();
             },
           },
+          icon('play', 14),
           'Cargar',
         ),
       ),
@@ -355,7 +356,7 @@ export function sidePanel(g: Game, bot: Bot, tab: 'prog' | 'ficha', onTab: (t: '
         h('span', {}, 'Nivel'),
         h('span', {}, String(bot.lvl)),
         h('span', {}, 'Memoria'),
-        h('span', {}, `${countBlocks(bot.program)}/${memoryFor(bot.lvl, bot.traits)} bloques`),
+        h('span', {}, `${memoryUse(bot.program, g.world.library)}/${memoryFor(bot.lvl, bot.traits)} bloques`),
         h('span', {}, 'Generación'),
         h('span', {}, String(bot.gen)),
         h('span', {}, 'Padres'),
@@ -377,7 +378,7 @@ export function sidePanel(g: Game, bot: Bot, tab: 'prog' | 'ficha', onTab: (t: '
           'button',
           {
             class: 'btn',
-            disabled: bot.lvl >= 6,
+            disabled: bot.lvl >= MAX_BOT_LVL,
             onclick: () => {
               g.mergeFrom = bot.id;
               g.setMode('merge');
@@ -968,6 +969,7 @@ export function layersModal(g: Game): void {
                       modal?.close();
                     },
                   },
+                  icon('descend', 14),
                   'Bajar en el montacargas',
                 ),
               ),
@@ -1107,7 +1109,7 @@ export function mergeModal(g: Game, a: Bot, b: Bot): void {
             if (!r.ok) return g.toast(r.msg, 'bad');
             const c = r.bot!;
             g.audio.fanfare();
-            for (let i = 0; i < 4; i++) setTimeout(() => g.renderer.sparkle(c.x, c.y, [0xffcf5a, 0x6fe3d6, 0xb48cf2, 0xffffff][i]), i * 150);
+            for (let i = 0; i < 4; i++) setTimeout(() => g.renderer.sparkle(c.x, c.y, [0xffcf5a, 0x6fe3d6, 0xb48cf2, 0xfff3d6][i]), i * 150);
             g.happy.set(c.id, g.world.tick + 40);
             modal?.close();
             g.selectBot(c.id);
@@ -1150,6 +1152,7 @@ export function repairModal(g: Game, key: string): void {
             g.say(`${def.name} vuelve a la vida. Mira su programa: aún guarda las notas de su último turno.`);
           },
         },
+        icon('repair', 16),
         `Reparar (${fmt(cost)} ✦)`,
       ),
     ],
@@ -1161,11 +1164,11 @@ export function settingsModal(g: Game): void {
   let modal: { close: () => void } | null = null;
   let armed = false;
   const saveBox = h('textarea', { class: 'code-in', placeholder: 'Pega aquí una partida exportada para cargarla' }) as HTMLTextAreaElement;
-  const reset = h('button', { class: 'btn danger' }, 'Borrar partida');
+  const reset = h('button', { class: 'btn danger' }, icon('remove', 16), 'Borrar partida');
   reset.addEventListener('click', () => {
     if (!armed) {
       armed = true;
-      reset.textContent = 'Pulsa otra vez para borrar todo';
+      reset.replaceChildren(icon('remove', 16), 'Pulsa otra vez para borrar todo');
       return;
     }
     clearLocal();
@@ -1211,6 +1214,7 @@ export function settingsModal(g: Game): void {
               copyText(saveBox.value, saveBox).then((ok) => g.toast(ok ? 'Partida copiada al portapapeles.' : 'Selecciona el texto y cópialo.', ok ? 'good' : ''));
             },
           },
+          icon('copy', 14),
           'Exportar partida',
         ),
         h(
@@ -1225,6 +1229,7 @@ export function settingsModal(g: Game): void {
               location.reload();
             },
           },
+          icon('save', 14),
           'Importar',
         ),
       ),
@@ -1265,7 +1270,7 @@ export function dawnModal(g: Game, r: DawnReport): void {
           'div',
           {},
           h('div', { class: 'label' }, 'Empleados de la noche'),
-          h('div', { class: 'kv', style: 'max-width:380px' }, r.perBot.slice(0, 5).flatMap((p, i) => [h('span', {}, h('b', { class: 'rank' }, `${i + 1}.`), ` ${p.name}`), h('span', {}, `${fmt(p.earned)} ✦`)])),
+          h('div', { class: 'kv', style: 'max-width:380px' }, r.perBot.slice(0, 5).flatMap((p, i) => [h('span', {}, h('b', { class: 'rank' }, `${i + 1}.`), ` ${p.name}`), h('span', {}, [p.earned ? `${fmt(p.earned)} ✦` : '', p.merges ? `${fmt(p.merges)} ${p.merges === 1 ? 'fusión' : 'fusiones'}` : ''].filter(Boolean).join(' · '))])),
         )
       : null,
     h('div', { class: 'label' }, r.incidents.length ? `Incidentes (${r.incidents.length}) · pulsa para ir al bloque exacto` : 'Sin incidentes: una noche perfecta.'),

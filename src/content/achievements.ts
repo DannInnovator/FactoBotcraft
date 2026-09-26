@@ -6,7 +6,7 @@
 // Todo lo que miden sale del mundo (World): las marcas que no se pueden leer
 // directamente las va apuntando el rastreador en world.flags con el prefijo rec_.
 import { countBlocks, walk } from '../sim/program';
-import { LAYERS, TICKS_PER_SEC } from '../sim/content';
+import { LAYERS, MAX_BOT_LVL, TICKS_PER_SEC } from '../sim/content';
 import { isNight } from '../sim/sim';
 import type { Block, Bot, SimEvent, World } from '../sim/types';
 import { ALBA_WINDOWS, CODEX, albaWindows } from './lore';
@@ -122,7 +122,8 @@ export const HONORS: HonorChain[] = [
     tiers: [
       { title: 'Nietos', desc: 'Ten un bot de 3.ª generación.', n: 3 },
       { title: 'Estirpe', desc: 'Ten un bot de 5.ª generación.', n: 5 },
-      { title: 'Dinastía del Gremio', desc: 'Ten un bot de 7.ª generación.', n: 7 },
+      // Cada fusión sube a la vez nivel y generación, así que la 6.ª es la última
+      { title: 'Dinastía del Gremio', desc: `Ten un bot de ${MAX_BOT_LVL}.ª generación, la más alta que existe.`, n: MAX_BOT_LVL },
     ],
   },
   {
@@ -198,7 +199,8 @@ export const HONORS: HonorChain[] = [
     tiers: [
       { title: 'Cuadrilla', desc: 'Ten 5 bots trabajando a la vez (sin atascos ni pausas).', n: 5 },
       { title: 'Turno completo', desc: 'Ten 12 bots trabajando a la vez.', n: 12, frags: 1 },
-      { title: 'Ejército de latón', desc: 'Ten 25 bots trabajando a la vez.', n: 25, frags: 2 },
+      // El precio de cada bot crece ×2,1: 18 a la vez ya es un reto de final de partida
+      { title: 'Ejército de latón', desc: 'Ten 18 bots trabajando a la vez.', n: 18, frags: 2 },
     ],
   },
   {

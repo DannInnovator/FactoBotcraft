@@ -137,4 +137,50 @@ describe('control de bots', () => {
     restartProgram(b);
     expect(b.stack).toEqual([]);
   });
+
+  it('el Reporte del Amanecer también reconoce a los bots que solo fusionan', () => {
+    const w = createWorld(12);
+    w.lumen = 1_000;
+    const l = w.layers[0];
+    // Dos casillas de suelo contiguas, lejos del montacargas
+    const i = l.tiles.findIndex((t, k) => t.t === 'floor' && l.tiles[k + 1]?.t === 'floor' && !l.bots.some((b) => b.y * l.w + b.x <= k + 1 && b.y * l.w + b.x >= k));
+    const x = i % l.w;
+    const y = Math.floor(i / l.w);
+    const bot = buyBot(w, x, y).bot!;
+    l.tiles[i].item = { kind: 'cobre', lvl: 1 };
+    l.tiles[i + 1].item = { kind: 'cobre', lvl: 1 };
+    loadProgram(w, bot, [mk('recoger', { dir: 'E' }), mk('soltar')]);
+    const rep = simulateOffline(w, 5 * 60 * 1000);
+    expect(rep.merges).toBeGreaterThanOrEqual(1);
+    const me = rep.perBot.find((p) => p.id === bot.id);
+    expect(me?.merges).toBeGreaterThanOrEqual(1);
+    expect(me?.earned).toBe(0);
+  });
+
+  it('rechaza textos que no son una partida en lugar de romper el juego', () => {
+    expect(deserialize('{"layers":[]}')).toBeNull();
+    expect(deserialize('{"layers":[{"w":2,"h":2,"tiles":[],"bots":[]}]}')).toBeNull();
+    const w = createWorld(13);
+    const noCaptain = JSON.parse(serialize(w));
+    noCaptain.layers[0].bots = [];
+    expect(deserialize(JSON.stringify(noCaptain))).toBeNull();
+    const badLayer = JSON.parse(serialize(w));
+    badLayer.current = 3;
+    expect(deserialize(JSON.stringify(badLayer))).toBeNull();
+    expect(deserialize('no es json')).toBeNull();
+  });
+
+  it('completa los campos que faltan en partidas antiguas', () => {
+    const w = createWorld(14);
+    const old = JSON.parse(serialize(w));
+    delete old.flags;
+    delete old.stats.bestLumenPerMin;
+    delete old.layers[0].signals;
+    delete old.lumenLog;
+    const back = deserialize(JSON.stringify(old))!;
+    expect(back.flags).toEqual({});
+    expect(back.stats.bestLumenPerMin).toBe(0);
+    expect(back.layers[0].signals.rojo).toBe(0);
+    expect(back.lumenLog).toEqual([]);
+  });
 });
