@@ -3,7 +3,7 @@ import type { Game } from '../game';
 import { HONORS, HONOR_TOTAL, earnedTiers, type HonorCat, type HonorChain } from '../content/achievements';
 import { art, CODEX_ART, endingArt } from '../content/art';
 import { ALBA_WINDOWS, CODEX, DIARY, ENDING, INTRO, OLD_BOTS, albaWindows } from '../content/lore';
-import { adaMark, adaProgram, challengeFor, challengeWorld, runChallenge, todayKey, type ChallengeDef } from '../sim/challenge';
+import { adaMark, adaProgram, challengeFor, challengeMemory, challengeWorld, todayKey, verifyChallenge, type ChallengeDef, type ChallengeEntry, type ChallengeResult } from '../sim/challenge';
 import {
   canDescend,
   descend,
@@ -22,8 +22,9 @@ import {
 } from '../sim/commands';
 import { BEACON_COLORS, BEACON_LETTERS, BUILDINGS, FUSIONS, LAMP_COST, LAYERS, MAX_BOT_LVL, OPS, ORES, REPAIR_COST, TRAITS, itemLabel, memoryFor } from '../sim/content';
 import type { DawnReport } from '../sim/offline';
-import { cloneExact, cloneFresh, countBlocks, decodeRoutine, encodeRoutine, memoryUse, programToText, suggest } from '../sim/program';
-import { clearLocal, deserialize, getPref, serialize, setPref } from '../sim/save';
+import { cloneExact, cloneFresh, countBlocks, decodeRoutine, encodeRoutine, memoryUse, programToText, suggest, walk } from '../sim/program';
+import { clearLocal, deserialize, getPref, loadLocal, saveLocal, serialize, setPref } from '../sim/save';
+import { cloudEnabled, cloudSaveMeta, currentUser, challengeRanking, downloadCloudSave, flushCloudSave, initCloud, onUser, setCaptainName, signInWithEmail, signOut, submitChallenge, type CloudUser } from '../net/cloud';
 import type { Block, Bot, Building, TraitId } from '../sim/types';
 import { setProgram } from '../sim/world';
 import { add, copyText, fmt, fmtTime, h } from './dom';
@@ -76,9 +77,125 @@ export function titleScreen(g: Game): void {
       newBtn,
       h('button', { class: 'btn ghost', onclick: () => howTo(g) }, 'Cómo se juega'),
     ),
+    ...(cloudEnabled ? [titleCloud(g)] : []),
     h('p', { class: 'foot' }, 'Con sonido · WASD o flechas para moverte · E para usar · R para grabar'),
   );
   g.ui.appendChild(el);
+}
+
+/** En la portada: la cuenta del jugador y, si la nube tiene una partida más reciente, la opción de usarla. */
+function titleCloud(g: Game): HTMLElement {
+  const box = h('div', { class: 'cloud-line' });
+  const render = async (u: CloudUser | null) => {
+    box.replaceChildren(
+      u
+        ? h('button', { class: 'btn ghost small', onclick: () => accountModal(g) }, icon('cloud', 14), `Capataz ${u.name ?? '(sin nombre)'} · nube activa`)
+        : h('button', { class: 'btn ghost small', onclick: () => accountModal(g) }, icon('cloud', 14), 'Guarda tu progreso en la nube'),
+    );
+    if (!u) return;
+    const meta = await cloudSaveMeta();
+    const local = loadLocal();
+    if (meta && (!local || meta.updatedAt > local.lastSaved + 10_000)) {
+      box.append(
+        h(
+          'div',
+          { class: 'cloud-offer' },
+          h('span', {}, `En la nube hay una partida más reciente: capa ${meta.layer}, ${fmt(meta.lumen)} ✦ en total, guardada ${ago(meta.updatedAt)}.`),
+          h('button', { class: 'btn small primary', onclick: () => void useCloudSave(g) }, icon('cloud', 14), 'Jugar la de la nube'),
+        ),
+      );
+    }
+  };
+  void initCloud().then(render);
+  onUser((u) => void render(u));
+  return box;
+}
+
+function ago(t: number): string {
+  const s = Math.max(0, (Date.now() - t) / 1000);
+  if (s < 90) return 'hace un momento';
+  if (s < 3600) return `hace ${Math.round(s / 60)} min`;
+  if (s < 86_400) return `hace ${Math.round(s / 3600)} h`;
+  return `hace ${Math.round(s / 86_400)} días`;
+}
+
+/** Sustituye la partida de este navegador por la de la nube y recarga. */
+async function useCloudSave(g: Game): Promise<void> {
+  const data = await downloadCloudSave();
+  const w = data ? deserialize(data) : null;
+  if (!w) return g.toast('No se pudo leer la partida de la nube.', 'bad');
+  saveLocal(w);
+  location.reload();
+}
+
+// ---------- Cuenta y nube ----------
+export function accountModal(g: Game): void {
+  const body = h('div', { class: 'stack' });
+  let armedLoad = false;
+  const render = async (u: CloudUser | null) => {
+    if (!u) {
+      const email = h('input', { class: 'txt', type: 'email', placeholder: 'tu@correo.com', 'aria-label': 'Correo electrónico', autocomplete: 'email' }) as HTMLInputElement;
+      const msg = h('p', { class: 'muted', style: 'margin:0' });
+      body.replaceChildren(
+        h('p', { style: 'margin:0' }, 'Con una cuenta, tu partida se guarda en la nube (juega en el móvil y sigue en el ordenador) y tus marcas del Desafío Diario entran en el ranking.'),
+        h('p', { class: 'muted', style: 'margin:0' }, 'Sin contraseñas: te enviamos un enlace de acceso a tu correo. Ábrelo en este mismo navegador.'),
+        h('div', { class: 'row' }, email, h('button', {
+          class: 'btn primary',
+          onclick: async () => {
+            if (!/^\S+@\S+\.\S+$/.test(email.value)) return (msg.textContent = 'Escribe un correo válido.');
+            msg.textContent = 'Enviando…';
+            const err = await signInWithEmail(email.value.trim());
+            msg.textContent = err ? `No se pudo enviar: ${err}` : '¡Listo! Revisa tu correo (y la carpeta de spam) y abre el enlace.';
+          },
+        }, icon('cloud', 16), 'Enviarme el enlace')),
+        msg,
+      );
+      return;
+    }
+    const name = h('input', { class: 'txt', value: u.name ?? '', maxlength: '20', placeholder: 'Nombre de Capataz', 'aria-label': 'Nombre de Capataz' }) as HTMLInputElement;
+    const nameMsg = h('p', { class: 'muted', style: 'margin:0' }, u.name ? 'Así apareces en el ranking.' : 'Elige un nombre para aparecer en el ranking.');
+    const meta = await cloudSaveMeta();
+    const syncMsg = h('p', { style: 'margin:0' }, meta ? `Última copia en la nube: ${ago(meta.updatedAt)} (capa ${meta.layer}, ${fmt(meta.lumen)} ✦ en total).` : 'Todavía no hay ninguna copia en la nube.');
+    const loadBtn = meta
+      ? h('button', { class: 'btn ghost', onclick: () => {
+          if (!armedLoad) {
+            armedLoad = true;
+            loadBtn!.replaceChildren(icon('cloud', 16), 'Pulsa otra vez: se reemplaza la partida de este navegador');
+            return;
+          }
+          void useCloudSave(g);
+        } }, icon('cloud', 16), 'Cargar la de la nube')
+      : null;
+    body.replaceChildren(
+      h('p', { style: 'margin:0' }, `Sesión iniciada con ${u.email}.`),
+      h('div', { class: 'label' }, 'Nombre de Capataz'),
+      h('div', { class: 'row' }, name, h('button', { class: 'btn', onclick: async () => {
+        const err = await setCaptainName(name.value);
+        nameMsg.textContent = err ?? '¡Guardado! Así apareces en el ranking.';
+      } }, 'Guardar nombre')),
+      nameMsg,
+      h('div', { class: 'label' }, 'Partida en la nube'),
+      syncMsg,
+      h('p', { class: 'muted', style: 'margin:0' }, 'Mientras juegas se guarda sola cada minuto y al cerrar el juego.'),
+      h('div', { class: 'row' },
+        g.started ? h('button', { class: 'btn primary', onclick: async () => {
+          g.save();
+          const err = await flushCloudSave(g.world);
+          g.toast(err ?? 'Partida guardada en la nube.', err ? 'bad' : 'good');
+          void render(currentUser());
+        } }, icon('save', 16), 'Guardar ahora') : null,
+        loadBtn,
+      ),
+      h('div', { class: 'row' }, h('button', { class: 'btn ghost', onclick: async () => {
+        if (g.started) await flushCloudSave(g.world);
+        await signOut();
+      } }, 'Cerrar sesión')),
+    );
+  };
+  body.append(h('p', { class: 'muted' }, 'Conectando…'));
+  const off = onUser((u) => void render(u));
+  g.modals.show({ title: 'Cuenta y nube', cls: 'narrow', body, onClose: off });
+  void initCloud().then(() => render(currentUser())).catch(() => body.replaceChildren(h('p', {}, 'No se pudo conectar con la nube. Inténtalo más tarde.')));
 }
 
 function intro(g: Game, done: () => void): void {
@@ -1182,6 +1299,20 @@ export function settingsModal(g: Game): void {
     body: h(
       'div',
       { class: 'stack' },
+      cloudEnabled
+        ? h(
+            'button',
+            {
+              class: 'btn',
+              onclick: () => {
+                modal?.close();
+                accountModal(g);
+              },
+            },
+            icon('cloud', 16),
+            currentUser() ? `Cuenta y nube · ${currentUser()!.name ?? currentUser()!.email}` : 'Cuenta y nube: guarda tu progreso',
+          )
+        : null,
       h(
         'label',
         { class: 'row', for: 'q-sel' },
@@ -1336,6 +1467,44 @@ export function challengeModal(g: Game): void {
   const lib = g.world.library;
   const sels = Array.from({ length: def.bots }, () => h('select', { 'aria-label': 'Rutina' }, h('option', { value: '' }, '(sin programa)'), lib.map((r) => h('option', { value: r.id }, r.name))) as HTMLSelectElement);
   const programs = () => sels.map((s) => cloneFresh(lib.find((r) => r.id === s.value)?.blocks ?? []));
+  // Lo que se juega (y se envía al ranking): los programas y las funciones a las que llaman
+  const entry = (): ChallengeEntry => {
+    const progs = programs();
+    const fns = new Map<string, Block[]>();
+    const visit = (list: Block[]) =>
+      walk(list, (b) => {
+        if (b.op !== 'llamar' || !b.routine || fns.has(b.routine)) return;
+        const r = lib.find((x) => x.id === b.routine);
+        if (!r) return;
+        fns.set(r.id, r.blocks);
+        visit(r.blocks);
+      });
+    progs.forEach(visit);
+    return { programs: progs, fns: [...fns].map(([id, blocks]) => ({ id, blocks })) };
+  };
+  /** Comprueba la entrada igual que el servidor; si algo no vale, lo dice y no juega. */
+  const checked = (): { entry: ChallengeEntry; result: ChallengeResult } | null => {
+    const e = entry();
+    const v = verifyChallenge(def.day, e);
+    if (!v.ok) {
+      g.toast(v.reason, 'bad');
+      return null;
+    }
+    return { entry: e, result: v.result };
+  };
+  const ranking = cloudEnabled ? h('ol', { class: 'ranking' }, h('li', { class: 'muted' }, 'Cargando…')) : null;
+  if (ranking)
+    void challengeRanking(def.day)
+      .catch(() => null)
+      .then((rows) =>
+        ranking.replaceChildren(
+          ...(!rows
+            ? [h('li', { class: 'muted' }, 'No se pudo cargar el ranking. Comprueba tu conexión.')]
+            : rows.length
+              ? rows.map((r) => h('li', { class: r.me ? 'me' : '' }, h('span', {}, r.name), h('span', { class: 'num' }, `${fmt(r.ticks)} ticks · ${r.blocks} bloques`)))
+              : [h('li', { class: 'muted' }, 'Aún no hay marcas hoy. ¡Sé el primer Capataz del ranking!')]),
+        ),
+      );
   let modal: { close: () => void } | null = null;
   const body = h(
     'div',
@@ -1356,9 +1525,10 @@ export function challengeModal(g: Game): void {
     ),
     h('div', { class: 'label' }, 'Programa de cada bot (elige rutinas de tu Biblioteca)'),
     sels.map((s, i) => h('label', { class: 'row' }, h('span', { style: 'width:90px' }, `Retador-${i + 1}`), s)),
-    h('p', { style: 'margin:0;color:var(--muted);font-size:12.5px' }, 'Los retadores empiezan junto a las vetas de la sala inicial, igual que en tu primera capa. Consejo: estudia la solución de ADA y mejórala.'),
+    h('p', { style: 'margin:0;color:var(--muted);font-size:12.5px' }, `Los retadores empiezan junto a las vetas de la sala inicial, igual que en tu primera capa. Cada programa debe caber en ${challengeMemory(def)} bloques (sus funciones incluidas). Consejo: estudia la solución de ADA y mejórala.`),
+    ranking ? [h('div', { class: 'label' }, icon('ranking', 14), ' Ranking de hoy'), ranking] : null,
   );
-  const finish = (res: { success: boolean; ticks: number; blocks: number }) => {
+  const finish = (res: ChallengeResult, sent?: ChallengeEntry) => {
     if (res.success && (!best || res.ticks < best)) setPref(`best-${def.day}`, String(res.ticks));
     // Para «Rival de ADA»: días en que se batió su marca y si fue con menos bloques
     if (res.success && ada.success && res.ticks < ada.ticks) {
@@ -1376,6 +1546,7 @@ export function challengeModal(g: Game): void {
         res.success && ada.success
           ? h('p', { style: 'margin:0' }, res.ticks < ada.ticks ? `Batiste a ADA por ${fmt(ada.ticks - res.ticks)} ticks. Mireya estaría orgullosa.` : `ADA lo hizo en ${fmt(ada.ticks)} ticks. ¡Aún puedes mejorar!`)
           : h('p', { style: 'margin:0' }, `Se agotaron los ${fmt(def.maxTicks)} ticks sin enviar el cobre nv${def.goalLvl}.`),
+        res.success && cloudEnabled ? rankLine(g, def.day, sent) : null,
       ),
     });
   };
@@ -1401,9 +1572,10 @@ export function challengeModal(g: Game): void {
         {
           class: 'btn',
           onclick: () => {
-            const res = runChallenge(def, programs());
+            const c = checked();
+            if (!c) return;
             modal?.close();
-            finish(res);
+            finish(c.result, c.entry);
           },
         },
         'Resultado rápido',
@@ -1413,8 +1585,11 @@ export function challengeModal(g: Game): void {
         {
           class: 'btn primary',
           onclick: () => {
+            const c = checked();
+            if (!c) return;
             modal?.close();
-            runVisual(g, def, programs(), finish);
+            // La animación es solo para verlo: la marca es la de la verificación
+            runVisual(g, def, c.entry, () => finish(c.result, c.entry));
           },
         },
         icon('play', 14),
@@ -1424,8 +1599,38 @@ export function challengeModal(g: Game): void {
   });
 }
 
-function runVisual(g: Game, def: ChallengeDef, progs: Block[][], finish: (r: { success: boolean; ticks: number; blocks: number }) => void): void {
+/** Tras superar el desafío: envía la marca al ranking y muestra el puesto (o cómo entrar en él). */
+function rankLine(g: Game, day: string, sent?: ChallengeEntry): HTMLElement {
+  const line = h('p', { class: 'rank-line' }, icon('ranking', 14), ' ');
+  const u = currentUser();
+  if (!u) {
+    line.append('Inicia sesión para que esta marca entre en el ranking. ', h('button', { class: 'btn small', onclick: () => accountModal(g) }, icon('cloud', 14), 'Cuenta'));
+    return line;
+  }
+  if (!u.name) {
+    line.append('Elige tu nombre de Capataz para entrar en el ranking. ', h('button', { class: 'btn small', onclick: () => accountModal(g) }, 'Elegir nombre'));
+    return line;
+  }
+  if (!sent) return line;
+  line.append('Verificando tu marca…');
+  void submitChallenge(day, sent).then((r) => {
+    line.replaceChildren(
+      icon('ranking', 14),
+      ' ',
+      r.error
+        ? r.error
+        : r.improved
+          ? `Marca verificada: vas en el puesto ${r.rank} del ranking de hoy.`
+          : `Verificada, pero tu mejor marca de hoy sigue siendo ${fmt(r.best!.ticks)} ticks (puesto ${r.rank}).`,
+    );
+  });
+  return line;
+}
+
+function runVisual(g: Game, def: ChallengeDef, e: ChallengeEntry, finish: () => void): void {
   const w = challengeWorld(def);
+  const progs = e.programs;
+  w.library = e.fns.map((f) => ({ id: f.id, name: f.id, author: '', blocks: cloneExact(f.blocks), created: 0, uses: 0, fn: true }));
   w.layers[0].bots.forEach((b, i) => setProgram(b, progs[i] ?? []));
   g.setHudVisible(false, false);
   const l = w.layers[0];
@@ -1448,10 +1653,9 @@ function runVisual(g: Game, def: ChallengeDef, progs: Block[][], finish: (r: { s
     world: w,
     done: false,
     onDone: () => {
-      const res = { success: (w.delivered.cobre ?? 0) >= def.goalLvl, ticks: w.tick, blocks: progs.reduce((a, p) => a + countBlocks(p), 0) };
       setTimeout(() => {
         end();
-        finish(res);
+        finish();
       }, 1500);
     },
   };

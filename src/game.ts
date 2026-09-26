@@ -1,6 +1,7 @@
 // Controlador del juego: une simulación, render 3D, audio e interfaz.
 import { Audio } from './audio/audio';
 import { HonorTracker, evaluateHonors, programSize } from './content/achievements';
+import { flushCloudSave, queueCloudSave } from './net/cloud';
 import { ADA_TIPS, CODEX, DIARY, albaWindows, ALBA_WINDOWS } from './content/lore';
 import { QUESTS, type Quest } from './content/quests';
 import { Renderer } from './render/renderer';
@@ -183,6 +184,7 @@ export class Game {
   save(): void {
     if (!this.started || this.demo) return;
     saveLocal(this.world);
+    queueCloudSave(this.world); // solo si hay sesión; como mucho una vez por minuto
     this.lastSave = performance.now();
   }
 
@@ -545,6 +547,7 @@ export class Game {
     if (!this.started || this.demo) return;
     if (document.hidden) {
       this.save();
+      void flushCloudSave(this.world); // al salir o cambiar de pestaña, la nube queda al día
     } else {
       const away = Date.now() - this.world.lastSaved;
       if (away > 60_000 && !this.challenge && !this.replay) this.runOffline(away);
