@@ -84,6 +84,7 @@ export class Game {
   private honors = new HonorTracker();
   sideCollapsed = false;
   private hudTimer = 0;
+  private hudObserver: ResizeObserver | null = null;
 
   constructor(canvas: HTMLCanvasElement, ui: HTMLElement) {
     this.ui = ui;
@@ -1208,6 +1209,14 @@ export class Game {
     this.el.toolbar = h('div', { class: 'toolbar plate', role: 'toolbar', 'aria-label': 'Herramientas' });
     this.el.compass = h('div', { class: 'compass plate', title: 'Girar cámara (Q)', role: 'button', tabindex: '0', onclick: () => this.rotateCam(1) }, h('span', {}, icon('compass', 26)));
     this.ui.append(this.el.hud, this.el.orders, this.el.toasts, this.el.toolbar, this.el.compass);
+    // Los paneles de arriba se colocan justo bajo el HUD, que puede ocupar una o
+    // dos filas según el ancho: así nunca tapan la pausa, la ayuda ni los ajustes.
+    this.hudObserver?.disconnect();
+    this.hudObserver = new ResizeObserver(() => {
+      const r = this.el.hud.getBoundingClientRect();
+      if (r.height > 0) this.ui.style.setProperty('--hud-b', `${Math.round(r.bottom + 10)}px`);
+    });
+    this.hudObserver.observe(this.el.hud);
     if (window.matchMedia('(pointer: coarse)').matches) {
       const dirBtn = (cls: string, d: Dir, label: string) =>
         h('button', { class: cls, 'aria-label': label, onpointerdown: (e: Event) => (e.preventDefault(), this.moveCaptain(this.renderer.screenToGrid(d))) }, { N: '▲', S: '▼', W: '◀', E: '▶' }[d]);

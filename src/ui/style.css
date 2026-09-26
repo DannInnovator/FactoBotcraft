@@ -295,7 +295,7 @@ h3 {
 /* ---------- Órdenes de trabajo ---------- */
 .orders {
   position: absolute;
-  top: 78px;
+  top: var(--hud-b, 78px);
   left: 12px;
   width: 290px;
   padding: 12px 14px;
@@ -344,7 +344,7 @@ h3 {
 /* ---------- Panel lateral (bot) ---------- */
 .side {
   position: absolute;
-  top: 78px;
+  top: var(--hud-b, 78px);
   right: 12px;
   bottom: 86px;
   width: 400px;
@@ -818,7 +818,7 @@ h3 {
 .toasts {
   position: absolute;
   right: 12px;
-  top: 78px;
+  top: var(--hud-b, 78px);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -877,7 +877,7 @@ h3 {
 }
 .recbar {
   position: absolute;
-  top: 78px;
+  top: var(--hud-b, 78px);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -1460,7 +1460,7 @@ input.txt {
     padding: 4px 7px;
   }
   .orders {
-    top: 108px;
+    top: var(--hud-b, 108px);
     left: 8px;
     width: calc(100% - 16px);
     padding: 8px 12px;
@@ -1470,7 +1470,7 @@ input.txt {
     margin: 2px 0;
   }
   .ada {
-    top: 170px;
+    top: calc(var(--hud-b, 108px) + 62px);
     bottom: auto;
     left: 8px;
     width: calc(100% - 16px);
@@ -1484,7 +1484,7 @@ input.txt {
   .toasts,
   .toasts.shift {
     right: 8px;
-    top: 170px;
+    top: calc(var(--hud-b, 108px) + 62px);
     width: calc(100% - 16px);
   }
   .side {
@@ -1522,7 +1522,7 @@ input.txt {
     bottom: calc(100px + env(safe-area-inset-bottom, 0px));
   }
   .recbar {
-    top: 108px;
+    top: var(--hud-b, 108px);
   }
 }
 
@@ -1808,7 +1808,7 @@ input.txt {
 }
 @media (max-width: 760px) {
   .tut {
-    top: 108px;
+    top: var(--hud-b, 108px);
     bottom: auto;
     left: 8px;
     width: calc(100% - 16px);
@@ -1833,7 +1833,7 @@ input.txt {
 }
 @media (max-width: 760px) {
   .tut {
-    top: 164px;
+    top: calc(var(--hud-b, 108px) + 56px);
   }
   .tut.over-modal {
     top: auto;
@@ -2017,7 +2017,7 @@ input.txt {
   }
   #ui.side-open .tut:not(.inline),
   #ui.side-open .ada {
-    top: 108px;
+    top: var(--hud-b, 108px);
   }
   .toolbar {
     left: 8px;
@@ -2032,7 +2032,7 @@ input.txt {
     display: none;
   }
   .tut:not(.inline) {
-    top: 108px;
+    top: var(--hud-b, 108px);
   }
   /* Tarjeta plegada: una sola línea */
   .tut.collapsed {
@@ -2101,7 +2101,7 @@ input.txt {
   .tut:not(.inline),
   .ada {
     left: 8px;
-    top: 46px;
+    top: var(--hud-b, 46px);
     bottom: auto;
     width: min(300px, 40vw);
     max-height: calc(100% - 110px);
@@ -2137,7 +2137,7 @@ input.txt {
   }
   /* Columna derecha: panel del bot y avisos */
   .side {
-    top: 46px;
+    top: var(--hud-b, 46px);
     bottom: 56px;
     right: 8px;
     left: auto;
@@ -2146,7 +2146,7 @@ input.txt {
   }
   .toasts,
   .toasts.shift {
-    top: 46px;
+    top: var(--hud-b, 46px);
     right: 8px;
     width: min(280px, 36vw);
   }
@@ -2228,6 +2228,6 @@ input.txt {
     padding: 6px 14px;
   }
   .recbar {
-    top: 46px;
+    top: var(--hud-b, 46px);
   }
 }
