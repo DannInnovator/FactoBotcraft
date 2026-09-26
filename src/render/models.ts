@@ -434,10 +434,39 @@ export function makeBeacon(letter: string): THREE.Group {
 }
 
 export function makeLantern(): THREE.Group {
+  // Jaula abierta (placas y cuatro barrotes) para que se vea el cristal encendido
   const g = new THREE.Group();
-  const frame = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.22, 0.16), std(0x3a2e24, { metalness: 0.4 }));
+  const iron = std(0x3a2e24, { metalness: 0.4 });
   const glass = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.16, 0.12), glowMat(0xffc46b, 3));
-  g.add(frame, glass);
+  const plate = new THREE.BoxGeometry(0.17, 0.03, 0.17);
+  const top = new THREE.Mesh(plate, iron);
+  top.position.y = 0.095;
+  const bottom = new THREE.Mesh(plate, iron);
+  bottom.position.y = -0.095;
+  g.add(glass, top, bottom);
+  for (const [sx, sz] of [
+    [1, 1],
+    [1, -1],
+    [-1, 1],
+    [-1, -1],
+  ]) {
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.19, 0.02), iron);
+    bar.position.set(sx * 0.07, 0, sz * 0.07);
+    g.add(bar);
+  }
+  return g;
+}
+
+/** Farol colgado del techo sobre una casilla de suelo: el farol con su cadena. */
+export function makeHangingLantern(): THREE.Group {
+  const g = makeLantern();
+  const brass = std(0xc9a063, { metalness: 0.6, roughness: 0.4 });
+  const cap = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.08, 4), brass);
+  cap.position.y = 0.15;
+  cap.rotation.y = Math.PI / 4;
+  const chain = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.9, 5), brass);
+  chain.position.y = 0.64;
+  g.add(cap, chain);
   return g;
 }
 

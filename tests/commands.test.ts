@@ -1,12 +1,29 @@
 import { describe, expect, it } from 'vitest';
 import { loreRoutines } from '../src/content/lore';
-import { buyBot, canDescend, descend, fuseInstruction, loadProgram, mergeBots, traitOffers } from '../src/sim/commands';
+import { buyBot, canDescend, descend, fuseInstruction, loadProgram, mergeBots, placeLamp, traitOffers } from '../src/sim/commands';
+import { isLit } from '../src/sim/sim';
 import { simulateOffline } from '../src/sim/offline';
 import { cloneFresh, mk } from '../src/sim/program';
 import { deserialize, serialize } from '../src/sim/save';
 import { createWorld } from '../src/sim/world';
 
 describe('comandos', () => {
+  it('las lámparas pueden colgar del techo sobre el suelo e iluminan alrededor', () => {
+    const w = createWorld(8);
+    w.lumen = 100;
+    const l = w.layers[0];
+    const [ex, ey] = l.elevator;
+    const floor = l.tiles.findIndex((t, i) => t.t === 'floor' && Math.abs((i % l.w) - ex) + Math.abs(Math.floor(i / l.w) - ey) > 6);
+    const x = floor % l.w;
+    const y = Math.floor(floor / l.w);
+    expect(isLit(l, x, y)).toBe(false);
+    expect(placeLamp(w, x, y).ok).toBe(true);
+    expect(l.tiles[floor].t).toBe('floor'); // sigue siendo transitable
+    expect(isLit(l, x, y)).toBe(true);
+    expect(placeLamp(w, x, y).ok).toBe(false); // ya hay una
+    expect(placeLamp(w, ex, ey).ok).toBe(false); // no sobre el montacargas
+  });
+
   it('la fusión de linaje sube de nivel y hereda rasgos', () => {
     const w = createWorld(5);
     w.lumen = 1000;

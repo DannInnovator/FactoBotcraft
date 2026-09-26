@@ -51,7 +51,7 @@ export interface Tile {
   cd?: number; // enfriamiento de la veta
   hard?: number; // ticks para excavar la pared
   capsule?: string; // id de la página de diario
-  lamp?: boolean; // lámpara colgada (en paredes)
+  lamp?: boolean; // lámpara colgada (en una pared, o del techo sobre el suelo)
   beacon?: string; // A-D
   item?: Item | null;
   phase?: number; // desfase de la lava

@@ -391,6 +391,10 @@ export class Game {
           this.foundCapsule(e.page);
           break;
         case 'corrupt':
+          if (!this.world.flags.hintLight) {
+            this.world.flags.hintLight = 1;
+            this.say('Un Glitchling le ha desordenado el código a uno de tus bots. Nunca entran en la luz: cuelga lámparas cerca de donde trabajan tus bots, en las paredes o del techo sobre el suelo. Para arreglarlo, selecciona al bot y pulsa «Restaurar original».');
+          }
           if (e.layer === cur) {
             this.renderer.burst(e.x, e.y, 0xc04cff, 22, 3);
             this.audio.corrupt();
@@ -991,7 +995,7 @@ export class Game {
       case 'bot':
         return isWalkable(t) && !l.bots.some((b) => b.x === x && b.y === y) && this.world.lumen >= nextBotCost(this.world);
       case 'lamp':
-        return (t.t === 'wall' || t.t === 'vein' || t.t === 'bedrock') && !t.lamp && this.world.lumen >= LAMP_COST;
+        return (t.t === 'wall' || t.t === 'vein' || t.t === 'bedrock' || t.t === 'floor') && !t.lamp && this.world.lumen >= LAMP_COST;
       case 'build':
         return (this.buildKind === 'turbina' ? t.t === 'lava' : t.t === 'floor') && !t.item && !l.bots.some((b) => b.x === x && b.y === y) && this.world.lumen >= BUILDINGS[this.buildKind].cost;
       case 'remove':
@@ -1009,7 +1013,7 @@ export class Game {
     this.el.modeHint?.remove();
     const texts: Partial<Record<Mode, string>> = {
       bot: `Elige una casilla de suelo para ensamblar el bot (${nextBotCost(this.world)} ✦). Esc para cancelar.`,
-      lamp: `Elige una pared junto a un pasillo para colgar la lámpara (${LAMP_COST} ✦). Puedes colgar varias. Esc para terminar.`,
+      lamp: `Elige una pared junto a un pasillo o una casilla de suelo (cuelga del techo) para la lámpara (${LAMP_COST} ✦). La luz espanta a los Glitchlings y, en las capas oscuras, deja a los bots ver las vetas. Esc para terminar.`,
       build: `Elige una casilla ${this.buildKind === 'turbina' ? 'de lava' : 'de suelo libre'} para: ${BUILDINGS[this.buildKind].name} (${BUILDINGS[this.buildKind].cost} ✦). Esc para cancelar.`,
       remove: 'Elige el edificio que quieres desmontar (recuperas la mitad de su coste; su contenido se pierde). Esc para cancelar.',
       beacon: `Elige dónde clavar la baliza ${this.beaconLetter}.`,

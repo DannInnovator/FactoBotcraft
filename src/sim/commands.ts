@@ -54,9 +54,11 @@ export function buyBot(world: World, x: number, y: number): CmdResult & { bot?: 
 export function placeLamp(world: World, x: number, y: number): CmdResult {
   const l = layerOf(world);
   const t = tileAt(l, x, y);
-  if (!t || !(t.t === 'wall' || t.t === 'bedrock' || t.t === 'vein')) return fail('Las lámparas se cuelgan en paredes de roca.');
+  // En una pared de roca o colgada del techo sobre una casilla de suelo libre
+  const onFloor = t?.t === 'floor';
+  if (!t || !(onFloor || t.t === 'wall' || t.t === 'bedrock' || t.t === 'vein')) return fail('Las lámparas se cuelgan en paredes de roca o del techo, sobre el suelo.');
   if (t.lamp) return fail('Ahí ya hay una lámpara.');
-  const touchesFloor = [
+  const touchesFloor = onFloor || [
     [1, 0],
     [-1, 0],
     [0, 1],

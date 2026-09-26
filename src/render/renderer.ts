@@ -24,6 +24,7 @@ import {
   makeDynamo,
   makeBattery,
   makeTurbine,
+  makeHangingLantern,
   makeLantern,
   setMood,
   std,
@@ -470,9 +471,12 @@ export class Renderer {
         this.staticGroup.add(b);
       }
       if (t.lamp) {
-        const lan = makeLantern();
-        lan.position.set(x, 1.3, y);
+        // En la pared se apoya encima; sobre el suelo cuelga del techo por encima de los bots
+        const hanging = t.t === 'floor';
+        const lan = hanging ? makeHangingLantern() : makeLantern();
+        lan.position.set(x, hanging ? 1.45 : 1.3, y);
         this.staticGroup.add(lan);
+        if (hanging) this.lampSpots.push(new THREE.Vector3(x, 1.45, y));
       }
     });
     this.elevatorModel = makeElevator(pal.accent);
