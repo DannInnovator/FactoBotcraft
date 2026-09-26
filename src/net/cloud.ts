@@ -10,7 +10,8 @@ import type { ChallengeEntry } from '../sim/challenge';
 import { serialize } from '../sim/save';
 import type { World } from '../sim/types';
 
-const URL_ = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+// La dirección base del proyecto, aunque se haya pegado con /rest/v1/ o una barra final
+const URL_ = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim().replace(/\/(rest|auth)\/v1\/?$/, '').replace(/\/+$/, '');
 const KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
 /** ¿Está configurada la nube en esta compilación? */

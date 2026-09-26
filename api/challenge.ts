@@ -9,7 +9,8 @@ import { verifyChallenge } from '../src/sim/challenge.js';
 
 declare const process: { env: Record<string, string | undefined> };
 
-const URL_ = process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL ?? '';
+// La dirección base del proyecto, aunque se haya pegado con /rest/v1/ o una barra final
+const URL_ = (process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL ?? '').trim().replace(/\/(rest|auth)\/v1\/?$/, '').replace(/\/+$/, '');
 const ANON = process.env.VITE_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? '';
 const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
 
