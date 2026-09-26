@@ -37,6 +37,8 @@ Sin configurar nada, el juego funciona igual que siempre, con el guardado local:
 
 ## A tener en cuenta
 
+- **Pausa por inactividad:** el plan gratuito de Supabase pausa el proyecto tras una semana sin uso. Para evitarlo, `vercel.json` programa una tarea diaria (12:00 UTC) que llama a `api/keepalive.ts`, y esta hace una consulta mínima a la base de datos. Si se crea la variable `CRON_SECRET` en Vercel, solo el propio Vercel puede llamarla.
+
 - **Correos con la marca del juego:** en *Authentication* → *Emails* → *Templates*, sustituye las plantillas «Magic Link» y «Confirm signup» por las de `supabase/emails/` (asuntos en el comentario de cada archivo). El remitente seguirá siendo de Supabase hasta configurar un SMTP propio, donde también se pone el nombre de remitente «Konstrukta».
 - **Correos:** el envío de correos que trae Supabase de serie tiene un límite muy bajo por hora. Para más de un puñado de jugadores conviene configurar un SMTP propio (por ejemplo, Resend, que tiene plan gratuito) en *Authentication* → *Emails* → *SMTP Settings*.
 - **Privacidad:** se guarda el correo de cada jugador (lo gestiona Supabase) y su nombre de Capataz. Antes de abrir el juego al público conviene añadir una nota de privacidad.
