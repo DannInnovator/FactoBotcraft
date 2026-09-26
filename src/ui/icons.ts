@@ -98,28 +98,44 @@ export function icon(name: string, size = 20): HTMLElement {
 }
 
 // ---------- Logotipo ----------
-/** Emblema: la boca de la mina con la luz del Lumen dentro, vías y un pico. */
+/** Gema fusionada: remata la antena del emblema y hace de «o» en la palabra. */
+const GEM = `<path d="M0-10 8-3V4L0 11-8 4V-3Z" fill="#FFB85C" stroke="#6a3a14" stroke-width="2" stroke-linejoin="round"/><path d="M0-10 8-3V4L0 11Z" fill="#E8913F"/><path d="M0-10-8-3 0 0 8-3Z" fill="#FFE0A8"/>`;
+
+/** Emblema: la cabeza de un Craftbot sonriente con la gema fusionada en la antena. */
 export const EMBLEM = `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <defs>
-    <radialGradient id="kglow" cx="50%" cy="58%" r="45%">
+    <radialGradient id="kglow" cx="50%" cy="50%" r="50%">
       <stop offset="0" stop-color="#FFE9B0"/>
-      <stop offset=".45" stop-color="#FFB85C"/>
+      <stop offset=".45" stop-color="#FFB85C" stop-opacity=".7"/>
       <stop offset="1" stop-color="#FFB85C" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <path d="M8 58V30a24 24 0 0 1 48 0v28z" fill="#221A25"/>
-  <path d="M14 58V31a18 18 0 0 1 36 0v27z" fill="#17121A"/>
-  <circle cx="32" cy="38" r="17" fill="url(#kglow)" opacity=".75"/>
-  <path d="M32 24.5l2.7 9 9 2.7-9 2.7-2.7 9-2.7-9-9-2.7 9-2.7z" fill="#FFE9B0"/>
-  <path d="M8 58V30a24 24 0 0 1 48 0v28" fill="none" stroke="#C9A063" stroke-width="3.5" stroke-linejoin="round"/>
-  <path d="M14 58V31a18 18 0 0 1 36 0v27" fill="none" stroke="#C9A063" stroke-width="1.6" opacity=".6"/>
-  <path d="M20 58 26 46M44 58 38 46M22 54h20M24.5 50h15" stroke="#C9A063" stroke-width="1.8" stroke-linecap="round" fill="none"/>
-  <circle cx="14.5" cy="21" r="1.6" fill="#C9A063"/><circle cx="49.5" cy="21" r="1.6" fill="#C9A063"/><circle cx="32" cy="8.8" r="1.6" fill="#C9A063"/>
+  <circle cx="32" cy="10" r="11" fill="url(#kglow)"/>
+  <path d="M32 15v8" stroke="#C9A063" stroke-width="2.5" stroke-linecap="round"/>
+  <g transform="translate(32 9) scale(.62)">${GEM}</g>
+  <rect x="10" y="22" width="44" height="36" rx="13" fill="#E07B39" stroke="#6a3a14" stroke-width="2.5"/>
+  <path d="M10 33a12 12 0 0 1 12-11h20a12 12 0 0 1 12 11" fill="#C9A063" stroke="#6a3a14" stroke-width="2.5"/>
+  <circle cx="7" cy="40" r="4" fill="#C9A063" stroke="#6a3a14" stroke-width="2"/>
+  <circle cx="57" cy="40" r="4" fill="#C9A063" stroke="#6a3a14" stroke-width="2"/>
+  <rect x="16" y="32" width="32" height="20" rx="6" fill="#17121A"/>
+  <path d="M22 44q4-6 8 0M34 44q4-6 8 0" fill="none" stroke="#6FE3D6" stroke-width="3" stroke-linecap="round"/>
 </svg>`;
+
+/** La «o» de la palabra: la gema fusionada con su destello. */
+export const GEM_O = `<svg viewBox="0 0 40 46" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <circle cx="20" cy="24" r="17" fill="#FFB85C" opacity=".35"/>
+  <path d="M20 3 33 15V31L20 43 7 31V15Z" fill="#FFB85C" stroke="#6a3a14" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M20 3 33 15V31L20 43Z" fill="#E8913F"/>
+  <path d="M20 3 7 15 20 20 33 15Z" fill="#FFE0A8"/>
+  <path d="M20 15l1.6 5.4L27 22l-5.4 1.6L20 29l-1.6-5.4L13 22l5.4-1.6z" fill="#FFF3D6"/>
+</svg>`;
+
+/** La palabra «Konstrukta» con la gema como «o» (quien la use pone el aria-label). */
+export const WORDMARK = `K<span class="logo-o">${GEM_O}</span>nstrukta`;
 
 /** Logotipo horizontal: emblema + palabra (la palabra usa Lilita One, con alternativas). */
 export function logoHtml(size: 'lg' | 'sm' = 'lg'): string {
-  return `<span class="logo logo-${size}"><span class="logo-emblem">${EMBLEM}</span><span class="logo-word">Konstrukta</span></span>`;
+  return `<span class="logo logo-${size}"><span class="logo-emblem">${EMBLEM}</span><span class="logo-word" aria-hidden="true">${WORDMARK}</span></span>`;
 }
 
 export const FAVICON = `data:image/svg+xml,${encodeURIComponent(EMBLEM)}`;

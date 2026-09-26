@@ -1,14 +1,15 @@
 // Prepara el arte aprobado (art/approved/*.png) para el juego y para Steam:
 //  - src/assets/art/<id>.webp: versiones ligeras que Vite mete en el bundle.
-//  - art/steam/<nombre>.png: recortes a los tamaños exactos de docs/ART_BRIEFS.md §A2.
-// Uso: node scripts/optimize-art.mjs
+//  - art/steam/base/<nombre>.png: recortes limpios a los tamaños exactos de
+//    docs/ART_BRIEFS.md §A2 (scripts/brand-logo.ts les pone el logotipo encima).
+// Uso: node scripts/optimize-art.mjs && npm run steam
 import { mkdirSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import sharp from 'sharp';
 
 const SRC = 'art/approved';
 const GAME = 'src/assets/art';
-const STEAM = 'art/steam';
+const STEAM = 'art/steam/base';
 
 // Ancho máximo en el juego. Lo que no aparece aquí no se usa dentro del juego.
 const GAME_WIDTH = {

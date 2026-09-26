@@ -30,7 +30,7 @@ import { DELTA, type Block, type Bot, type Building, type CondKind, type Dir, ty
 import { createWorld, isWalkable, makeBot as makeSimBot, setProgram, tileAt } from './sim/world';
 import { Modals, adaRadio, add, fmt, h } from './ui/dom';
 import { ProgramEditor } from './ui/editor';
-import { EMBLEM, FAVICON, icon } from './ui/icons';
+import { EMBLEM, FAVICON, WORDMARK, icon } from './ui/icons';
 import * as P from './ui/panels';
 import { Tutorial } from './ui/tutorial';
 
@@ -1148,7 +1148,7 @@ export class Game {
     this.el.hud = h(
       'div',
       { class: 'hud' },
-      h('div', { class: 'brand plate' }, h('span', { class: 'brand-emblem', html: EMBLEM }), h('h1', {}, 'Konstrukta')),
+      h('div', { class: 'brand plate' }, h('span', { class: 'brand-emblem', html: EMBLEM }), h('h1', { html: WORDMARK, 'aria-label': 'Konstrukta' })),
       g('lumen', 'Lumen', 'lumen', false, 'lumen'),
       g('frag', 'Estática', 'frags', false, 'fragment'),
       g('alba', 'Ventanas de Alba', 'alba', true, 'alba'),
