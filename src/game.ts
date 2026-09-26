@@ -1215,8 +1215,12 @@ export class Game {
     this.hudObserver = new ResizeObserver(() => {
       const r = this.el.hud.getBoundingClientRect();
       if (r.height > 0) this.ui.style.setProperty('--hud-b', `${Math.round(r.bottom + 10)}px`);
+      this.updateToolbarFade();
     });
     this.hudObserver.observe(this.el.hud);
+    // En pantallas estrechas la barra se desplaza: un degradado avisa de que hay más
+    this.el.toolbar.addEventListener('scroll', () => this.updateToolbarFade(), { passive: true });
+    this.hudObserver.observe(this.el.toolbar);
     if (window.matchMedia('(pointer: coarse)').matches) {
       const dirBtn = (cls: string, d: Dir, label: string) =>
         h('button', { class: cls, 'aria-label': label, onpointerdown: (e: Event) => (e.preventDefault(), this.moveCaptain(this.renderer.screenToGrid(d))) }, { N: '▲', S: '▼', W: '◀', E: '▶' }[d]);
@@ -1260,6 +1264,14 @@ export class Game {
     tool('challenge', 'Desafío', null, false, () => P.challengeModal(this));
     const c = canDescend(w);
     if (w.layers.length < LAYERS.length) tool('descend', 'Descender', null, false, () => P.layersModal(this), c.ok ? 'ready' : '', !c.ok);
+    this.updateToolbarFade();
+  }
+
+  private updateToolbarFade(): void {
+    const tb = this.el.toolbar;
+    if (!tb) return;
+    tb.classList.toggle('more-l', tb.scrollLeft > 2);
+    tb.classList.toggle('more-r', tb.scrollLeft + tb.clientWidth < tb.scrollWidth - 2);
   }
 
   renderOrders(): void {
