@@ -1,0 +1,4 @@
+﻿# El juego solo necesita el código y src/assets; el arte fuente de la raíz no se despliega
+/art/
+/dist/
+/dist-artifact/

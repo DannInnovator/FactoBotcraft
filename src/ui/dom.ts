@@ -1,4 +1,5 @@
 // Pequeñas utilidades de DOM sin framework.
+import { art } from '../content/art';
 import { icon } from './icons';
 type Child = Node | string | number | null | undefined | false | Child[];
 type Attrs = Record<string, unknown> & { class?: string; style?: string };
@@ -31,6 +32,12 @@ function append(el: Node, children: Child[]): void {
     else if (c instanceof Node) el.appendChild(c);
     else el.appendChild(document.createTextNode(String(c)));
   }
+}
+
+/** La radio de ADA: su retrato con las ondas de voz encima. */
+export function adaRadio(): HTMLElement {
+  const src = art('char_ada');
+  return h('div', { class: src ? 'radio portrait' : 'radio', style: src ? `background-image:url(${src})` : '', 'aria-hidden': 'true' }, h('i'), h('i'), h('i'), h('i'));
 }
 
 export function fmt(n: number): string {

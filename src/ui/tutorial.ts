@@ -3,7 +3,7 @@
 // realice la acción (o pulse «Siguiente» en los pasos informativos).
 import type { Game } from '../game';
 import { nextBotCost } from '../sim/commands';
-import { h } from './dom';
+import { adaRadio, h } from './dom';
 import { icon } from './icons';
 
 type Ctx = Record<string, number>;
@@ -390,7 +390,7 @@ export class Tutorial {
       h(
         'div',
         { class: 'tut-head' },
-        h('div', { class: 'radio', 'aria-hidden': 'true' }, h('i'), h('i'), h('i'), h('i')),
+        adaRadio(),
         h('div', { class: 'tut-titles' }, h('span', { class: 'label' }, `${s.chapter + 1}. ${CHAPTERS[s.chapter]} · ${pos}/${chapterSteps.length}`), h('h3', {}, s.title)),
         h(
           'button',
