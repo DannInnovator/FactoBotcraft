@@ -152,11 +152,15 @@ export function gemMaterial(kind: OreKind, lvl: number): THREE.MeshStandardMater
   }) as THREE.MeshStandardMaterial;
 }
 
+// Compartida por todas las gemas: se crean y descartan a cada fusión, así que
+// una geometría propia por gema se acumularía en la GPU sin liberarse nunca.
+const gemHaloGeo = new THREE.TorusGeometry(0.3, 0.015, 6, 24);
+
 export function makeGem(it: Item): THREE.Mesh {
   const m = new THREE.Mesh(gemGeometry(it.lvl), gemMaterial(it.kind, it.lvl));
   m.castShadow = true;
   if (it.lvl >= 6) {
-    const halo = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.015, 6, 24), glowMat(ORES[it.kind].color, 2));
+    const halo = new THREE.Mesh(gemHaloGeo, glowMat(ORES[it.kind].color, 2));
     halo.rotation.x = Math.PI / 2;
     halo.name = 'halo';
     m.add(halo);
