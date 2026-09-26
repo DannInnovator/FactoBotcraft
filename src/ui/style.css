@@ -757,6 +757,24 @@ h3 {
   justify-content: center;
   gap: 2px;
 }
+/* Con retrato, las ondas de voz quedan abajo, sobre la rejilla de la radio */
+.ada .radio.portrait,
+.tut .radio.portrait {
+  background-size: cover;
+  background-position: 50% 45%;
+  align-items: flex-end;
+  padding-bottom: 5px;
+  overflow: hidden;
+}
+.radio.portrait i {
+  opacity: 0.9;
+  box-shadow: 0 0 4px rgb(0 0 0 / 0.7);
+}
+.ada .radio.portrait,
+.tut .radio.portrait {
+  width: 52px;
+  height: 52px;
+}
 .ada .radio i {
   width: 3px;
   background: var(--crystal);
@@ -1037,6 +1055,30 @@ h3 {
   color: #6a3a1a;
   margin-bottom: 8px;
 }
+/* Ilustraciones del Códex */
+.art-img {
+  display: block;
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+.codex-art {
+  aspect-ratio: 4 / 3;
+  max-height: 36vh;
+  object-fit: cover;
+  border: 1px solid #3a2e3a;
+}
+.diary-art {
+  border-radius: 4px;
+  mix-blend-mode: multiply; /* el papel del dibujo se funde con el de la página */
+}
+.alba-art {
+  max-width: none;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
 textarea.code-in {
   width: 100%;
   min-height: 70px;
@@ -1136,6 +1178,30 @@ input.txt {
 .title .foot {
   color: var(--muted);
   font-size: 12px;
+}
+/* Ilustración de fondo (título y final): se oscurece donde va el texto */
+.title.art {
+  background:
+    radial-gradient(ellipse at 50% 45%, rgb(23 18 26 / 0.45), rgb(23 18 26 / 0.85) 75%),
+    var(--art) center / cover no-repeat,
+    #17121a;
+}
+@media (orientation: portrait) {
+  /* En vertical, el encuadre se desplaza hacia el bot dormido de la derecha */
+  .title.art:not(.ending) {
+    background-position: center, 82% center;
+  }
+}
+.title.ending {
+  background: radial-gradient(ellipse at 50% 40%, rgb(40 20 60 / 0.4), rgb(10 6 14 / 0.92) 70%);
+}
+.title.ending.art {
+  justify-content: flex-end;
+  padding-bottom: max(8vh, 32px);
+  background:
+    linear-gradient(rgb(10 6 14 / 0) 25%, rgb(10 6 14 / 0.78) 55%, rgb(10 6 14 / 0.92)),
+    var(--art) center / cover no-repeat,
+    #0a060e;
 }
 .intro-text {
   max-width: 58ch;

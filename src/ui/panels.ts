@@ -1,5 +1,6 @@
 // Pantallas y paneles del juego (DOM). Cada función recibe el controlador.
 import type { Game } from '../game';
+import { art, CODEX_ART, endingArt } from '../content/art';
 import { ALBA_WINDOWS, CODEX, DIARY, ENDING, INTRO, OLD_BOTS, albaWindows } from '../content/lore';
 import { adaMark, adaProgram, challengeFor, challengeWorld, runChallenge, todayKey, type ChallengeDef } from '../sim/challenge';
 import {
@@ -35,7 +36,8 @@ const rn = (g: Game) => (id: string) => g.world.library.find((r) => r.id === id)
 export function titleScreen(g: Game): void {
   const has = g.hasSave();
   let confirmNew = false;
-  const el = h('div', { class: 'title' });
+  const bg = art('keyart_title');
+  const el = h('div', { class: bg ? 'title art' : 'title', style: bg ? `--art:url(${bg})` : '' });
   const newBtn = h('button', { class: `btn ${has ? '' : 'primary'}` }, 'Nueva partida');
   newBtn.addEventListener('click', () => {
     g.audio.start();
@@ -721,6 +723,12 @@ export function workshopModal(g: Game): void {
 }
 
 // ---------- Códex, diario, Alba y estadísticas ----------
+/** Ilustración decorativa (el texto de al lado ya la describe), o null si no hay. */
+function figure(id: string | undefined, cls: string): HTMLElement | null {
+  const src = id && art(id);
+  return src ? h('img', { class: `art-img ${cls}`, src, alt: '', loading: 'lazy', decoding: 'async' }) : null;
+}
+
 export function codexModal(g: Game, tab: 'codex' | 'diary' | 'alba' | 'stats', focus?: string): void {
   const body = h('div', { class: 'stack' });
   let cur = tab;
@@ -754,7 +762,7 @@ export function codexModal(g: Game, tab: 'codex' | 'diary' | 'alba' | 'stats', f
             unlocked.map((c) => h('button', { class: c.id === sel ? 'on' : '', onclick: () => ((sel = c.id), render()) }, c.title, h('small', {}, c.cat))),
             h('span', { class: 'label', style: 'margin-top:6px' }, `${CODEX.length - unlocked.length} entradas por descubrir`),
           ),
-          e ? h('div', { class: 'prose' }, h('span', { class: 'label' }, e.cat), h('h3', { style: 'font-size:24px;margin:4px 0 10px' }, e.title), h('p', {}, e.text)) : h('p', {}, '—'),
+          e ? h('div', { class: 'prose' }, figure(CODEX_ART[e.id], 'codex-art'), h('span', { class: 'label' }, e.cat), h('h3', { style: 'font-size:24px;margin:4px 0 10px' }, e.title), h('p', {}, e.text)) : h('p', {}, '—'),
         ),
       );
     } else if (cur === 'diary') {
@@ -774,15 +782,16 @@ export function codexModal(g: Game, tab: 'codex' | 'diary' | 'alba' | 'stats', f
                 : h('button', { disabled: true, style: 'opacity:.45' }, 'Cápsula sin encontrar', h('small', {}, `Capa ${Math.floor(i / 2) + 1}`)),
             ),
           ),
-          d ? h('div', { class: 'diary' }, h('h3', {}, d.title), h('p', { style: 'margin:0' }, d.text)) : h('p', { class: 'prose' }, 'Mireya escondía cápsulas de datos dentro de las paredes (brillan en azul). Excávalas para leer su diario.'),
+          d ? h('div', { class: 'diary' }, figure(`diario_${sel}`, 'diary-art'), h('h3', {}, d.title), h('p', { style: 'margin:0' }, d.text)) : h('p', { class: 'prose' }, 'Mireya escondía cápsulas de datos dentro de las paredes (brillan en azul). Excávalas para leer su diario.'),
         ),
       );
     } else if (cur === 'alba') {
       const win = albaWindows(g.world.stats.totalLumen, g.world.finished);
       const cv = h('canvas', { width: 900, height: 260, style: 'width:100%;height:auto;border-radius:8px;background:#0b0a14', 'aria-label': `Alba: ${win} de ${ALBA_WINDOWS} ventanas encendidas` }) as HTMLCanvasElement;
       drawAlba(cv, win / ALBA_WINDOWS);
-      add(body, 
-        cv,
+      add(body,
+        // Con la ciudad entera encendida, la ilustración del final sustituye al dibujo
+        (g.world.finished && figure('final_alba', 'alba-art')) || cv,
         h('div', { class: 'bigstat' }, h('div', {}, h('b', {}, fmt(win)), h('span', {}, `de ${fmt(ALBA_WINDOWS)} ventanas encendidas`)), h('div', {}, h('b', {}, `${((win / ALBA_WINDOWS) * 100).toFixed(1)} %`), h('span', {}, 'de la ciudad iluminada')), h('div', {}, h('b', {}, fmt(g.world.stats.totalLumen)), h('span', {}, 'Lumen enviado a la superficie'))),
         h('p', { class: 'prose' }, 'Cada ✦ que sube por el montacargas vuelve a encender una ventana de Alba. Las primeras se encienden deprisa; las últimas necesitan una mina de verdad.'),
       );
@@ -1365,11 +1374,14 @@ export function endingModal(g: Game, bot: Bot | null): void {
   let i = 0;
   const p = h('p', { class: 'intro-text' });
   const next = h('button', { class: 'btn primary' }, 'Continuar');
-  const el = h('div', { class: 'title', style: 'background:radial-gradient(ellipse at 50% 40%, rgb(40 20 60 / 0.4), rgb(10 6 14 / 0.92) 70%)' }, h('span', { class: 'label' }, 'El corazón del Vacío'), p, next);
+  const el = h('div', { class: 'title ending' }, h('span', { class: 'label' }, 'El corazón del Vacío'), p, next);
   const lines = [...ENDING];
   if (bot && !bot.captain) lines.splice(2, 0, `El Núcleo lee el código de ${bot.name}: ${countBlocks(bot.program)} bloques. Los repasa uno a uno, despacio, igual que un alumno repasa la lección.`);
   else lines.splice(2, 0, 'El Núcleo no encuentra ningún código: solo tus manos, que acaban de hacer el trabajo. Las observa largo rato. Aprender de un ejemplo también es aprender.');
   const show = () => {
+    const slide = art(endingArt(i, lines.length));
+    el.classList.toggle('art', !!slide);
+    if (slide) el.style.setProperty('--art', `url(${slide})`);
     p.textContent = lines[i];
     next.textContent = i === lines.length - 1 ? 'Ver Alba' : 'Continuar';
   };

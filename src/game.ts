@@ -28,7 +28,7 @@ import { loadLocal, saveLocal, getPref } from './sim/save';
 import { captainMove, captainUse, isLavaHot, isNight, restoreBot, tick } from './sim/sim';
 import { DELTA, type Block, type Bot, type Building, type CondKind, type Dir, type Layer, type Op, type SimEvent, type World } from './sim/types';
 import { createWorld, isWalkable, makeBot as makeSimBot, setProgram, tileAt } from './sim/world';
-import { Modals, add, fmt, h } from './ui/dom';
+import { Modals, adaRadio, add, fmt, h } from './ui/dom';
 import { ProgramEditor } from './ui/editor';
 import { EMBLEM, FAVICON, icon } from './ui/icons';
 import * as P from './ui/panels';
@@ -224,7 +224,7 @@ export class Game {
     this.adaEl = h(
       'div',
       { class: 'ada plate', role: 'status', onclick: () => this.nextAda() },
-      h('div', { class: 'radio', 'aria-hidden': 'true' }, h('i'), h('i'), h('i'), h('i')),
+      adaRadio(),
       h('div', {}, h('div', { class: 'who' }, 'ADA · radio de la mina'), h('div', { class: 'txt' }, text), h('div', { class: 'more' }, more ? `Pulsa para continuar (${more} más)` : 'Pulsa para cerrar')),
     );
     this.ui.appendChild(this.adaEl);
