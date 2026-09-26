@@ -170,6 +170,11 @@ export function helpModal(g: Game): void {
 // ---------- Panel lateral del bot ----------
 export const STATUS_TXT: Record<string, string> = { ok: 'trabajando', idle: 'sin programa', stuck: 'atascado', overheat: 'sobrecalentado', corrupt: 'código alterado', paused: 'en pausa' };
 
+/** Lo que lleva un bot en la mano, como se muestra en su panel. */
+export function handLabel(bot: Bot): string {
+  return bot.hand ? itemLabel(bot.hand) : 'nada';
+}
+
 export function sidePanel(g: Game, bot: Bot, tab: 'prog' | 'ficha', onTab: (t: 'prog' | 'ficha') => void): HTMLElement {
   const panel = h(
     'aside',
@@ -206,7 +211,7 @@ export function sidePanel(g: Game, bot: Bot, tab: 'prog' | 'ficha', onTab: (t: '
           'div',
           { class: 'prose' },
           h('p', {}, 'Eres tú. El Capataz no ejecuta programas: los enseña.'),
-          h('p', {}, 'Lleva en la mano: ', h('b', {}, bot.hand ? itemLabel(bot.hand) : 'nada')),
+          h('p', {}, 'Lleva en la mano: ', h('b', { class: 'cap-hand' }, handLabel(bot))),
           h('div', { class: 'kv' }, h('span', {}, 'Mover'), h('span', {}, 'WASD / flechas'), h('span', {}, 'Usar (soltar/recoger)'), h('span', {}, 'E / Espacio'), h('span', {}, 'Grabar'), h('span', {}, 'R'), h('span', {}, 'Girar cámara'), h('span', {}, 'Q'), h('span', {}, 'Siguiente bot'), h('span', {}, 'Tab')),
         ),
       ),

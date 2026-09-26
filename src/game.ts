@@ -1285,6 +1285,12 @@ export class Game {
         this.sideStatus = sb.status;
       }
     }
+    // Lo que lleva el Capataz cambia sin que cambie su estado: se actualiza aparte
+    const hand = sb && this.side?.querySelector('.cap-hand');
+    if (sb && hand) {
+      const txt = P.handLabel(sb);
+      if (hand.textContent !== txt) hand.textContent = txt;
+    }
     // La barra de herramientas muestra costes: la refrescamos con poca frecuencia
     if (force || w.tick % 20 === 0) this.renderToolbar();
   }
