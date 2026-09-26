@@ -1055,6 +1055,49 @@ h3 {
   color: #6a3a1a;
   margin-bottom: 8px;
 }
+/* Selector de balizas: una tarjeta por letra, con su color */
+.beacon-picks {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.beacon-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  background: #221a25;
+  border: 1px solid #3a2e3a;
+  border-bottom: 3px solid var(--bc);
+  border-radius: 8px;
+  color: var(--paper);
+  cursor: pointer;
+}
+.beacon-pick:hover,
+.beacon-pick:focus-visible {
+  border-color: var(--bc);
+  background: #2a2130;
+}
+.beacon-pick .flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--bc);
+}
+.beacon-pick .flag b {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1;
+}
+.beacon-pick .state {
+  font-size: 12.5px;
+}
+.beacon-pick small {
+  font-size: 11.5px;
+  color: var(--muted);
+}
 /* Distinciones del Gremio */
 .honor-cat h3 {
   font-size: 18px;

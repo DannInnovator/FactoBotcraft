@@ -999,7 +999,7 @@ export class Game {
       case 'build':
         return (this.buildKind === 'turbina' ? t.t === 'lava' : t.t === 'floor') && !t.item && !l.bots.some((b) => b.x === x && b.y === y) && this.world.lumen >= BUILDINGS[this.buildKind].cost;
       case 'remove':
-        return Object.values(BUILDINGS).some((d) => d.tile === t.t);
+        return Object.values(BUILDINGS).some((d) => d.tile === t.t) || !!t.lamp || !!t.beacon;
       case 'beacon':
         return isWalkable(t);
       case 'relocate':
@@ -1015,7 +1015,7 @@ export class Game {
       bot: `Elige una casilla de suelo para ensamblar el bot (${nextBotCost(this.world)} ✦). Esc para cancelar.`,
       lamp: `Elige una pared junto a un pasillo o una casilla de suelo (cuelga del techo) para la lámpara (${LAMP_COST} ✦). La luz espanta a los Glitchlings y, en las capas oscuras, deja a los bots ver las vetas. Esc para terminar.`,
       build: `Elige una casilla ${this.buildKind === 'turbina' ? 'de lava' : 'de suelo libre'} para: ${BUILDINGS[this.buildKind].name} (${BUILDINGS[this.buildKind].cost} ✦). Esc para cancelar.`,
-      remove: 'Elige el edificio que quieres desmontar (recuperas la mitad de su coste; su contenido se pierde). Esc para cancelar.',
+      remove: 'Elige un edificio, una lámpara o una baliza para quitarlo (recuperas la mitad de su coste; el contenido de las máquinas se pierde). Esc para cancelar.',
       beacon: `Elige dónde clavar la baliza ${this.beaconLetter}.`,
       merge: 'Elige el segundo bot (del mismo nivel) para fusionarlos.',
       relocate: 'Elige la casilla de suelo libre donde quieres dejar el bot. Empezará su programa desde el principio. Esc para cancelar.',

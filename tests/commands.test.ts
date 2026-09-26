@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { loreRoutines } from '../src/content/lore';
-import { buyBot, canDescend, descend, fuseInstruction, loadProgram, mergeBots, placeLamp, traitOffers } from '../src/sim/commands';
+import { buyBot, canDescend, descend, fuseInstruction, loadProgram, mergeBots, placeBeacon, placeLamp, removeBuilding, traitOffers } from '../src/sim/commands';
 import { isLit } from '../src/sim/sim';
 import { simulateOffline } from '../src/sim/offline';
 import { cloneFresh, mk } from '../src/sim/program';
@@ -22,6 +22,17 @@ describe('comandos', () => {
     expect(isLit(l, x, y)).toBe(true);
     expect(placeLamp(w, x, y).ok).toBe(false); // ya hay una
     expect(placeLamp(w, ex, ey).ok).toBe(false); // no sobre el montacargas
+    // Desmontar la descuelga y devuelve la mitad de su coste
+    const before = w.lumen;
+    expect(removeBuilding(w, x, y).ok).toBe(true);
+    expect(l.tiles[floor].lamp).toBeUndefined();
+    expect(w.lumen - before).toBe(7);
+    expect(isLit(l, x, y)).toBe(false);
+    // ...y también quita balizas
+    expect(placeBeacon(w, x, y, 'B').ok).toBe(true);
+    expect(removeBuilding(w, x, y).ok).toBe(true);
+    expect(l.tiles[floor].beacon).toBeUndefined();
+    expect(removeBuilding(w, x, y).ok).toBe(false); // ya no queda nada
   });
 
   it('la fusión de linaje sube de nivel y hereda rasgos', () => {

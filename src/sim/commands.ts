@@ -326,7 +326,20 @@ export function removeBuilding(world: World, x: number, y: number): CmdResult {
   const l = layerOf(world);
   const t = tileAt(l, x, y);
   const entry = (Object.entries(BUILDINGS) as [Building, (typeof BUILDINGS)[Building]][]).find(([, d]) => d.tile === t?.t);
-  if (!t || !entry) return fail('Ahí no hay ningún edificio.');
+  if (t && !entry && t.lamp) {
+    // Descolgar una lámpara: se recupera la mitad y la pared deja de estar reforzada
+    delete t.lamp;
+    if (t.t === 'wall') t.hard = Math.max(1, Math.round((t.hard ?? 48) / 3));
+    world.lumen += Math.floor(LAMP_COST / 2);
+    l.version++;
+    return { ok: true };
+  }
+  if (t && !entry && t.beacon) {
+    delete t.beacon;
+    l.version++;
+    return { ok: true };
+  }
+  if (!t || !entry) return fail('Ahí no hay nada que desmontar.');
   const [b, def] = entry;
   world.lumen += Math.floor(def.cost / 2);
   l.tiles[y * l.w + x] = b === 'turbina' ? { t: 'lava', item: null, phase: t.phase } : { t: 'floor', item: null };

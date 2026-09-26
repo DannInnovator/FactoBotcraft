@@ -279,6 +279,10 @@ export function botCost(owned: number): number {
 }
 export const LAMP_COST = 15;
 
+/** Cada baliza tiene su color, el mismo en la mina y en los menús. */
+export const BEACON_COLORS: Record<string, string> = { A: '#FFB85C', B: '#6FE3D6', C: '#7FB2E5', D: '#D78BFF' };
+export const BEACON_LETTERS = Object.keys(BEACON_COLORS);
+
 // ---------- Edificios y energía ----------
 export interface BuildingDef {
   name: string;

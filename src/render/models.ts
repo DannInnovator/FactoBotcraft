@@ -1,7 +1,7 @@
 // Modelos procedurales low-poly: bots, gemas, montacargas, forja, balizas y el Núcleo.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { ORES } from '../sim/content';
+import { BEACON_COLORS, ORES } from '../sim/content';
 import type { Item, OreKind, TraitId } from '../sim/types';
 
 export const LEVEL_COLORS = [0xe8d9c0, 0xe8d9c0, 0x6fd6c4, 0xe39a52, 0x7fa8e8, 0xb48cf2, 0xffcf5a];
@@ -411,25 +411,45 @@ export function makeCore(): THREE.Group {
 }
 
 export function makeBeacon(letter: string): THREE.Group {
+  // Estaca de latón sobre una piedra, banderín del color de su letra, farolillo en
+  // la punta y un anillo en el suelo para distinguirla de lejos.
+  const color = new THREE.Color(BEACON_COLORS[letter] ?? '#FFB85C');
   const g = new THREE.Group();
-  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.9, 6), std(0xcfc4b0));
-  pole.position.set(-0.3, 0.45, -0.3);
+  const brass = std(0xc9a063, { metalness: 0.6, roughness: 0.4 });
+  const stone = new THREE.Mesh(new THREE.DodecahedronGeometry(0.12, 0), std(0x4a4046, { roughness: 0.9, flatShading: true }));
+  stone.scale.set(1.2, 0.55, 1.2);
+  stone.position.set(-0.28, 0.05, -0.28);
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.95, 6), brass);
+  pole.position.set(-0.28, 0.5, -0.28);
+  const tip = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), glowMat(color.getHex(), 2.2));
+  tip.position.set(-0.28, 1.0, -0.28);
+  // Banderín: la letra en tinta oscura sobre el color de la baliza
   const cv = document.createElement('canvas');
-  cv.width = 64;
+  cv.width = 96;
   cv.height = 64;
   const c = cv.getContext('2d')!;
-  c.fillStyle = '#ff5a5a';
-  c.fillRect(0, 0, 64, 64);
-  c.fillStyle = '#fff';
-  c.font = 'bold 44px sans-serif';
+  c.fillStyle = `#${color.getHexString()}`;
+  c.beginPath();
+  c.moveTo(0, 0);
+  c.lineTo(96, 0);
+  c.lineTo(80, 32);
+  c.lineTo(96, 64);
+  c.lineTo(0, 64);
+  c.closePath();
+  c.fill();
+  c.fillStyle = '#17121A';
+  c.font = '44px "Lilita One", "Arial Black", sans-serif';
   c.textAlign = 'center';
   c.textBaseline = 'middle';
-  c.fillText(letter, 32, 36);
+  c.fillText(letter, 38, 35);
   const tex = new THREE.CanvasTexture(cv);
   tex.colorSpace = THREE.SRGBColorSpace;
-  const flag = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.28), new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide }));
-  flag.position.set(-0.13, 0.76, -0.3);
-  g.add(pole, flag);
+  const flag = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.28), new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, transparent: true }));
+  flag.position.set(-0.06, 0.8, -0.28);
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.3, 0.38, 24), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.45, side: THREE.DoubleSide }));
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.y = 0.02;
+  g.add(stone, pole, tip, flag, ring);
   return g;
 }
 

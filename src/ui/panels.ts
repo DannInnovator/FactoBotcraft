@@ -20,7 +20,7 @@ import {
   saveRoutine,
   traitOffers,
 } from '../sim/commands';
-import { BUILDINGS, FUSIONS, LAYERS, OPS, ORES, REPAIR_COST, TRAITS, itemLabel, memoryFor } from '../sim/content';
+import { BEACON_COLORS, BEACON_LETTERS, BUILDINGS, FUSIONS, LAMP_COST, LAYERS, OPS, ORES, REPAIR_COST, TRAITS, itemLabel, memoryFor } from '../sim/content';
 import type { DawnReport } from '../sim/offline';
 import { cloneExact, cloneFresh, countBlocks, decodeRoutine, encodeRoutine, programToText, suggest } from '../sim/program';
 import { clearLocal, deserialize, getPref, serialize, setPref } from '../sim/save';
@@ -296,7 +296,7 @@ export function sidePanel(g: Game, bot: Bot, tab: 'prog' | 'ficha', onTab: (t: '
             'div',
             { class: 'toast plate glitch', style: 'margin-bottom:8px' },
             'Un Glitchling alteró este programa (bloques en violeta). ',
-            h('button', { class: 'btn small', onclick: () => g.restore(bot) }, 'Restaurar original (5 ✦)'),
+            h('button', { class: 'btn small', onclick: () => g.restore(bot) }, icon('restaurar', 14), 'Restaurar original (5 ✦)'),
           )
         : null,
       h(
@@ -1024,24 +1024,31 @@ export function beaconPicker(g: Game): void {
     body: h(
       'div',
       { class: 'stack' },
-      h('p', { style: 'margin:0' }, 'Las balizas marcan destinos para la instrucción «ir a baliza». Cada letra existe una sola vez por capa: si la clavas de nuevo, se mueve.'),
+      h('p', { style: 'margin:0' }, 'Las balizas marcan destinos para la instrucción «ir a baliza». Cada letra existe una sola vez por capa: si la clavas de nuevo, se mueve. Para quitarla, Construir → Desmontar.'),
       h(
         'div',
-        { class: 'row' },
-        ['A', 'B', 'C', 'D'].map((L) =>
-          h(
+        { class: 'beacon-picks' },
+        BEACON_LETTERS.map((L) => {
+          const l = g.layer();
+          const at = l.tiles.findIndex((t) => t.beacon === L);
+          const users = l.bots.filter((b) => !b.captain && JSON.stringify(b.program).includes(`"beacon":"${L}"`)).length;
+          return h(
             'button',
             {
-              class: 'btn primary',
+              class: 'beacon-pick',
+              style: `--bc:${BEACON_COLORS[L]}`,
+              'aria-label': `Baliza ${L}${at >= 0 ? ', ya clavada en esta capa' : ''}`,
               onclick: () => {
                 g.beaconLetter = L;
                 modal?.close();
                 g.setMode('beacon');
               },
             },
-            `Baliza ${L}`,
-          ),
-        ),
+            h('span', { class: 'flag' }, icon('beacon', 26), h('b', {}, L)),
+            h('span', { class: 'state' }, at >= 0 ? 'Clavada · moverla' : 'Sin clavar'),
+            users ? h('small', {}, `${users} ${users === 1 ? 'bot la usa' : 'bots la usan'}`) : null,
+          );
+        }),
       ),
     ),
   });
@@ -1490,6 +1497,29 @@ export function buildModal(g: Game): void {
   };
   const w = g.world;
   const l = g.layer();
+  // Herramientas que no son edificios, con la misma tarjeta para que se vean igual de claras
+  const tool = (ico: string, name: string, desc: string, cost: string, label: string, onPick: () => void, lockedHint?: string) =>
+    h(
+      'div',
+      { class: `card ${lockedHint ? '' : 'ready'}`, style: lockedHint ? 'opacity:.55' : '' },
+      h('div', { class: 'row' }, icon(lockedHint ? 'close' : ico, 22), h('h3', {}, lockedHint ? `${name} · bloqueada` : name)),
+      h('span', { style: 'font-size:13px' }, desc),
+      lockedHint
+        ? h('span', { class: 'label', style: 'color:var(--crystal)' }, `Cómo se desbloquea: ${lockedHint}`)
+        : h('div', { class: 'row' }, h('span', { class: 'num', style: 'color:var(--lamp)' }, cost), h('button', { class: 'btn small primary', onclick: pick(onPick) }, label)),
+    );
+  const tools = [
+    tool('lamp', 'Lámpara', 'En una pared o colgada del techo. Espanta a los Glitchlings y deja ver las vetas en las capas oscuras.', `${LAMP_COST} ✦`, 'Colocar', () => g.setMode('lamp')),
+    tool(
+      'beacon',
+      'Baliza',
+      'Marca un destino (A, B, C o D) para la instrucción «ir a baliza».',
+      'Gratis',
+      'Elegir letra',
+      () => beaconPicker(g),
+      w.unlockedOps.includes('irA') ? undefined : 'en el Taller, fusiona «avanzar hasta» + «avanzar hasta».',
+    ),
+  ];
   const cards = (Object.keys(BUILDINGS) as Building[]).map((b) => {
     const d = BUILDINGS[b];
     const open = w.buildings.includes(b);
@@ -1532,12 +1562,14 @@ export function buildModal(g: Game): void {
         'Cofres y máquinas son sólidos: los bots los usan desde cualquiera de sus 4 lados con «soltar» y «recoger» apuntando hacia ellos. ',
         w.buildings.includes('dinamo') ? `Red eléctrica de esta capa: ${Math.floor(l.energy)} / ${l.energyCap} de carga.` : '',
       ),
+      h('div', { class: 'label' }, 'Luz y rutas'),
+      h('div', { class: 'cards' }, tools),
+      h('div', { class: 'label' }, 'Edificios'),
       h('div', { class: 'cards' }, cards),
       h(
         'div',
         { class: 'row' },
-        w.unlockedOps.includes('irA') ? h('button', { class: 'btn', onclick: pick(() => beaconPicker(g)) }, icon('beacon', 16), 'Clavar baliza') : null,
-        h('button', { class: 'btn ghost', onclick: pick(() => g.setMode('remove')) }, icon('remove', 16), 'Desmontar un edificio'),
+        h('button', { class: 'btn ghost', onclick: pick(() => g.setMode('remove')) }, icon('remove', 16), 'Desmontar un edificio, una lámpara o una baliza'),
       ),
     ),
   });
