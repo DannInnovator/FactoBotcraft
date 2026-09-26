@@ -224,7 +224,7 @@ export const OPS: Record<Op, OpDef> = {
   picarAlrededor: { label: 'picar alrededor', icon: 'picarAlrededor', desc: 'Pica la primera veta lista que tenga al lado.', cat: 'accion' },
   sisino: { label: 'si / si no', icon: 'sisino', desc: 'Una rama si se cumple, otra si no.', container: true, params: ['cond'], cat: 'control' },
   mientras: { label: 'mientras', icon: 'mientras', desc: 'Repite mientras se cumpla la condición.', container: true, params: ['cond'], cat: 'control' },
-  irA: { label: 'ir a baliza', icon: 'irA', desc: 'Camina (esquivando paredes) hasta la baliza.', params: ['beacon'], cat: 'logistica' },
+  irA: { label: 'ir a baliza', icon: 'irA', desc: 'Camina (esquivando paredes) hasta la baliza. Las balizas las clavas tú en Construir → Clavar baliza.', params: ['beacon'], cat: 'logistica' },
   emitir: { label: 'emitir señal', icon: 'emitir', desc: 'Emite una señal de color (otro bot puede esperarla).', params: ['color'], cat: 'señal' },
   esperarSenal: { label: 'esperar señal', icon: 'esperarSenal', desc: 'Espera hasta recibir una señal de ese color y la consume.', params: ['color'], cat: 'señal' },
   llamar: { label: 'rutina', icon: 'llamar', desc: 'Ejecuta una rutina guardada en tu Biblioteca.', params: ['routine'], cat: 'control' },

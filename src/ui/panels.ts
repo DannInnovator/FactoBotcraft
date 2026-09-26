@@ -709,6 +709,8 @@ export function workshopModal(g: Game): void {
                         if (!r.ok) return g.toast(r.msg, 'bad');
                         g.audio.fanfare();
                         g.toast(`Nueva instrucción: ${f.out.map((o) => OPS[o].label).join(' y ')}`, 'good');
+                        if (f.out.includes('irA'))
+                          g.say('Las balizas no vienen puestas: clávalas tú en Construir → Clavar baliza. Elige una letra, pulsa una casilla del suelo y tus bots podrán ir hasta ella con «ir a baliza».');
                         g.editor?.render();
                         g.renderToolbar();
                         render();
