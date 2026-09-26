@@ -20,7 +20,7 @@ import {
   saveRoutine,
   traitOffers,
 } from '../sim/commands';
-import { BEACON_COLORS, BEACON_LETTERS, BUILDINGS, FUSIONS, LAMP_COST, LAYERS, OPS, ORES, REPAIR_COST, TRAITS, itemLabel, memoryFor } from '../sim/content';
+import { BEACON_COLORS, BEACON_LETTERS, BUILDINGS, FUSIONS, LAMP_COST, LAYERS, MAX_BOT_LVL, OPS, ORES, REPAIR_COST, TRAITS, itemLabel, memoryFor } from '../sim/content';
 import type { DawnReport } from '../sim/offline';
 import { cloneExact, cloneFresh, countBlocks, decodeRoutine, encodeRoutine, programToText, suggest } from '../sim/program';
 import { clearLocal, deserialize, getPref, serialize, setPref } from '../sim/save';
@@ -377,7 +377,7 @@ export function sidePanel(g: Game, bot: Bot, tab: 'prog' | 'ficha', onTab: (t: '
           'button',
           {
             class: 'btn',
-            disabled: bot.lvl >= 6,
+            disabled: bot.lvl >= MAX_BOT_LVL,
             onclick: () => {
               g.mergeFrom = bot.id;
               g.setMode('merge');
