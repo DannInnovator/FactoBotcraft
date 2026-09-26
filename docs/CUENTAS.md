@@ -37,6 +37,7 @@ Sin configurar nada, el juego funciona igual que siempre, con el guardado local:
 
 ## A tener en cuenta
 
+- **Correos con la marca del juego:** en *Authentication* → *Emails* → *Templates*, sustituye las plantillas «Magic Link» y «Confirm signup» por las de `supabase/emails/` (asuntos en el comentario de cada archivo). El remitente seguirá siendo de Supabase hasta configurar un SMTP propio, donde también se pone el nombre de remitente «Konstrukta».
 - **Correos:** el envío de correos que trae Supabase de serie tiene un límite muy bajo por hora. Para más de un puñado de jugadores conviene configurar un SMTP propio (por ejemplo, Resend, que tiene plan gratuito) en *Authentication* → *Emails* → *SMTP Settings*.
 - **Privacidad:** se guarda el correo de cada jugador (lo gestiona Supabase) y su nombre de Capataz. Antes de abrir el juego al público conviene añadir una nota de privacidad.
 - **Steam:** cuando el juego salga en Steam, la versión de escritorio podrá usar Steam Cloud y las tablas de Steam en lugar de esta cuenta; `src/net/cloud.ts` es la única pieza que habría que cambiar.
