@@ -157,7 +157,7 @@ h3 {
 }
 .btn.rec.on {
   background: #d8394a;
-  color: #fff;
+  color: var(--paper);
   border-color: #ff8a96;
   animation: pulse 1.2s infinite;
 }
@@ -639,7 +639,7 @@ h3 {
 }
 .blk .not.on {
   background: var(--glitch);
-  color: #fff;
+  color: var(--paper);
   border-color: var(--glitch);
 }
 .palette {

@@ -657,7 +657,7 @@ export class Game {
         icon('moon', 18),
         h('b', {}, 'Turno de Noche'),
         (this.el.replayPct = h('span', { class: 'num' }, '0 %')),
-        h('button', { class: 'btn small', onclick: () => this.endReplay() }, 'Saltar'),
+        h('button', { class: 'btn small', onclick: () => this.endReplay() }, icon('close', 14), 'Saltar'),
       );
       this.ui.appendChild(this.el.replayInfo);
     } else this.el.replayInfo?.remove();

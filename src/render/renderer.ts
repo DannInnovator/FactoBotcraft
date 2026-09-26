@@ -868,7 +868,7 @@ export class Renderer {
       const tall = tt && (tt.t === 'wall' || tt.t === 'vein' || tt.t === 'bedrock' || tt.t === 'capsule');
       this.hoverBox.position.set(hx, tall ? 1.3 : 0.03, hy);
       const hm = this.hoverBox.material as THREE.MeshBasicMaterial;
-      hm.color.setHex(o.ghost ? (o.ghost.ok ? 0x7dffb0 : 0xff6a6a) : 0xffffff);
+      hm.color.setHex(o.ghost ? (o.ghost.ok ? 0x7dffb0 : 0xff6a6a) : 0xfff3d6);
       hm.opacity = o.ghost ? 0.45 : 0.16;
     } else this.hoverBox.visible = false;
 
