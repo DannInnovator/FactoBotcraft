@@ -9,7 +9,9 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: artifact ? 'dist-artifact' : 'dist',
       target: 'es2022',
-      assetsInlineLimit: 100_000_000,
+      // Solo la página única necesita el arte en línea; en la web cada ilustración
+      // es un archivo aparte que se descarga cuando hace falta (y se cachea).
+      assetsInlineLimit: artifact ? 100_000_000 : 4096,
       cssCodeSplit: false,
       rollupOptions: artifact
         ? {

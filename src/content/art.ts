@@ -1,5 +1,6 @@
 // Ilustraciones del juego. Las genera scripts/optimize-art.mjs a partir de
-// art/approved/ y Vite las empaqueta (en línea en la versión de una sola página).
+// art/approved/ y Vite las empaqueta: como archivos sueltos en la web y en línea
+// en la versión de una sola página.
 const files = import.meta.glob<string>('../assets/art/*.webp', { eager: true, query: '?url', import: 'default' });
 
 const ART: Record<string, string> = Object.fromEntries(
