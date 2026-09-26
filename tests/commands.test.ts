@@ -156,4 +156,31 @@ describe('control de bots', () => {
     expect(me?.merges).toBeGreaterThanOrEqual(1);
     expect(me?.earned).toBe(0);
   });
+
+  it('rechaza textos que no son una partida en lugar de romper el juego', () => {
+    expect(deserialize('{"layers":[]}')).toBeNull();
+    expect(deserialize('{"layers":[{"w":2,"h":2,"tiles":[],"bots":[]}]}')).toBeNull();
+    const w = createWorld(13);
+    const noCaptain = JSON.parse(serialize(w));
+    noCaptain.layers[0].bots = [];
+    expect(deserialize(JSON.stringify(noCaptain))).toBeNull();
+    const badLayer = JSON.parse(serialize(w));
+    badLayer.current = 3;
+    expect(deserialize(JSON.stringify(badLayer))).toBeNull();
+    expect(deserialize('no es json')).toBeNull();
+  });
+
+  it('completa los campos que faltan en partidas antiguas', () => {
+    const w = createWorld(14);
+    const old = JSON.parse(serialize(w));
+    delete old.flags;
+    delete old.stats.bestLumenPerMin;
+    delete old.layers[0].signals;
+    delete old.lumenLog;
+    const back = deserialize(JSON.stringify(old))!;
+    expect(back.flags).toEqual({});
+    expect(back.stats.bestLumenPerMin).toBe(0);
+    expect(back.layers[0].signals.rojo).toBe(0);
+    expect(back.lumenLog).toEqual([]);
+  });
 });
